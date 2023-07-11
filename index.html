@@ -5303,6 +5303,8 @@ var createScene = function () {
 
         pos1=rlatlon_to_xyz(r,lat1,lon1);
         redSphere.position=pos1;
+		  pos3=rlatlon_to_xyz_fe(rfe,lat1,lon1);
+		  redSphere_fe.position=pos3;
         update_all();
         
 	});	
@@ -5345,6 +5347,8 @@ var createScene = function () {
 
         pos1=rlatlon_to_xyz(r,lat1,lon1);
         redSphere.position=pos1;
+		  pos3=rlatlon_to_xyz_fe(rfe,lat1,lon1);
+		  redSphere_fe.position=pos3;
         update_all();
  
 	});	
@@ -5355,7 +5359,7 @@ var createScene = function () {
     var slon1="+";
     if (lon1<0) slon1="-";
 
-    //Ajuste fino de la latitud de la esfera roja (parte entera)
+    //Ajuste fino de la longitud de la esfera roja (parte entera)
     var lon1_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("lon1 int","");
     lon1_pe_btn.textBlock.text=slon1+Math.floor(alon1/dtor).toString().padStart(3,"0")+".";
     lon1_pe_btn.width="50px";
@@ -5388,12 +5392,14 @@ var createScene = function () {
 
         pos1=rlatlon_to_xyz(r,lat1,lon1);
         redSphere.position=pos1;
+		  pos3=rlatlon_to_xyz_fe(rfe,lat1,lon1);
+		  redSphere_fe.position=pos3;
         update_all();
         
 	});	
     loca_rect.addControl(lon1_pe_btn);
 
-    //Ajuste fino de la latitud de la esfera roja (parte decimal)
+    //Ajuste fino de la longitud de la esfera roja (parte decimal)
     var lon1_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("lon1 dec","");
     lon1_pd_btn.textBlock.text=(Math.floor(100*(alon1/dtor-Math.floor(alon1/dtor)))).toString().padStart(2,"0")+"º";
     lon1_pd_btn.width="35px";
@@ -5430,6 +5436,8 @@ var createScene = function () {
 
         pos1=rlatlon_to_xyz(r,lat1,lon1);
         redSphere.position=pos1;
+		  pos3=rlatlon_to_xyz_fe(rfe,lat1,lon1);
+		  redSphere_fe.position=pos3;
         update_all();
  
 	});	
@@ -5497,6 +5505,8 @@ var createScene = function () {
 
         pos2=rlatlon_to_xyz(r,lat2,lon2);
         blueSphere.position=pos2;
+        pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2);
+		  blueSphere_fe.position=pos4;
         update_all();
         
 	});	
@@ -5539,6 +5549,8 @@ var createScene = function () {
 
         pos2=rlatlon_to_xyz(r,lat2,lon2);
         blueSphere.position=pos2;
+		  pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2);
+		  blueSphere_fe.position=pos4;
         update_all();
  
 	});	
@@ -5549,7 +5561,7 @@ var createScene = function () {
     var slon2="+";
     if (lon2<0) slon2="-";
 
-    //Ajuste fino de la latitud de la esfera azul (parte entera)
+    //Ajuste fino de la longitud de la esfera azul (parte entera)
     var lon2_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("lon2 int","");
     lon2_pe_btn.textBlock.text=slon2+Math.floor(alon2/dtor).toString().padStart(3,"0")+".";
     lon2_pe_btn.width="50px";
@@ -5582,12 +5594,14 @@ var createScene = function () {
 
         pos2=rlatlon_to_xyz(r,lat2,lon2);
         blueSphere.position=pos2;
+        pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2);
+		  blueSphere_fe.position=pos4;
         update_all();
         
 	});	
     loca_rect.addControl(lon2_pe_btn);
 
-    //Ajuste fino de la latitud de la esfera azul (parte decimal)
+    //Ajuste fino de la longitud de la esfera azul (parte decimal)
     var lon2_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("lon2 dec","");
     lon2_pd_btn.textBlock.text=(Math.floor(100*(alon2/dtor-Math.floor(alon2/dtor)))).toString().padStart(2,"0")+"º";
     lon2_pd_btn.width="35px";
@@ -5624,6 +5638,8 @@ var createScene = function () {
 
         pos2=rlatlon_to_xyz(r,lat2,lon2);
         blueSphere.position=pos2;
+		  pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2);
+		  blueSphere_fe.position=pos4;
         update_all();
  
 	});	
