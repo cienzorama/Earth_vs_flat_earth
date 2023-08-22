@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="icon" type="image/vnd.microsoft.icon" href="favicon.ico">
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
         <title>Earth vs. flat earth</title>
@@ -23,6 +24,10 @@
         <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
         <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
 
+        <!--Open Street Maps-->
+        <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+        <!--<script src="https://openlayers.org/en/v4.6.5/css/ol.css"></script> -->
+
         <style>
             html, body {
                 overflow: hidden;
@@ -38,6 +43,22 @@
                 touch-action: none;
             }
             
+            #map {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+
+            .anybutton {
+                top:90%;
+                left:90%;
+                width:100px;
+                height:40px;
+                position: absolute;
+                z-index: 2;
+                background: white; 
+            }
+
             #canvasZone {
                 width: 100%;
                 height: 100%;
@@ -45,9 +66,16 @@
         </style>
     </head>
 <body>
-    <div id="canvasZone"><canvas id="renderCanvas"></canvas></div>
+    <div id="canvasZone">
+        <canvas id="renderCanvas" style="z-index:1;"></canvas>
+        <div tabindex="700" id="map" class="map"></div>
+        <input type="button" class="anybutton" id="done_button" value="DONE!" />
+    </div>
+
     <script>
+
         var canvas = document.getElementById("renderCanvas");
+        var done_button=document.getElementById("done_button");
 
         var startRenderLoop = function (engine, canvas) {
             engine.runRenderLoop(function () {
@@ -61,7 +89,80 @@
         var scene = null;
         var sceneToRender = null;
         var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+    
+        done_button.setAttribute("hidden", "hidden");
 
+        //Configuración del servidor de tiles de mapa
+        var myTileServer = new ol.layer.Tile({
+            source: new ol.source.OSM({
+                crossOrigin: null,
+                url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            })
+        });
+
+        //Creacíon del mapa y transformación
+        //de coordenadas
+        var map = new ol.Map({
+            layers: [ myTileServer ],
+            target: 'map',
+            view: new ol.View({
+                center: ol.proj.transform([10, 45], 'EPSG:4326', 'EPSG:3857'),
+                zoom: 2
+            })
+        });
+
+        //Configuración de las capas 
+        // de marcadores
+        marker_type=1;
+        markers=null;
+        markers = new ol.layer.Vector();
+        map.addLayer(markers);
+        marker_lat=null;
+        marker_lon=null;
+        map_latlon=[];
+
+        //Al pulsar sobre el mapa:
+        //Borra el marcador existente y crea uno nuevo
+        map.on('click', (event)=> {
+
+            //Borra la capa de marcadores existente
+            map.removeLayer(markers);
+
+            //Crea una nueva capa de marcadores
+            markers = new ol.layer.Vector({source: new ol.source.Vector()});
+            map.addLayer(markers);
+            
+            //Obtiene las coordenadas de la ubicación seleccionada
+            map_latlon=ol.proj.toLonLat(map.getCoordinateFromPixel(event.pixel));
+            marker_lat=map_latlon[0];
+            marker_lon=map_latlon[1];
+            
+            //Añade un marcador al mapa
+            var marker = new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat(map_latlon)));
+            
+            //Selección del símbolo de ubicación
+            if (marker_type==1) {
+                marker_icon_source='http://maps.google.com/mapfiles/kml/paddle/red-circle.png';
+            }
+            if (marker_type==2) {
+                marker_icon_source='http://maps.google.com/mapfiles/kml/paddle/blu-circle.png';
+            }
+
+            //Consfiguración del estilo de marcador
+            marker.setStyle(
+                new ol.style.Style({
+                    image: new ol.style.Icon({
+                    src: marker_icon_source,
+                    anchor: [0.5, 1],
+                    scale: 0.5
+                    })
+                })
+            );
+
+            //Añade el marcador a la capa de marcadores
+            markers.getSource().addFeature(marker);
+            
+        })
 
 //|-----------------------------------------------|
 //|  Representación de interactiva de fenómenos   |
@@ -1290,6 +1391,8 @@ var calculate_lines=function() {
     var v1=pos1.subtract(zero);
     var v2=pos2.subtract(zero);
 
+    base_line=BABYLON.Vector3.Distance(v1,v2)/r*6371.0;
+
     v1.normalize();
     v2.normalize();
 
@@ -1699,6 +1802,12 @@ var calculate_lines=function() {
     var sun_ue2=BABYLON.Vector3.Dot(sun_pos2,ori_ue2);
     var sun_ur2=BABYLON.Vector3.Dot(sun_pos2,ori_ur2);
     
+    //Control del error en vectores puramente radiales
+    if (sun_ur1>1) sun_ur1=1;
+    if (sun_ur2>1) sun_ur2=1;
+    if (moon_ur1>1) moon_ur1=1;
+    if (moon_ur2>1) moon_ur2=1;
+
     //Elevación y azimut de La Luna desde las ubicaciones
     moon_alt1=Math.asin(moon_ur1);
     moon_az1=Math.atan2(moon_ue1,moon_un1);
@@ -1710,6 +1819,8 @@ var calculate_lines=function() {
     sun_alt2=Math.asin(sun_ur2);
     sun_az2=Math.atan2(sun_ue2,sun_un2);
 
+    //Corrección de la altura del Sol y La Luna
+    //En función de la altura del observador
     moon_alt1_co=moon_alt1+h1_alt_co;
     moon_alt2_co=moon_alt2+h2_alt_co;
     sun_alt1_co=sun_alt1+h1_alt_co;
@@ -2291,6 +2402,24 @@ var calculate_lines=function() {
                                             rpos.y+rd1*(rvn.y*rcos*dcos+rve.y*rsin*dcos+rvr.y*dsin),
                                             rpos.z+rd1*(rvn.z*rcos*dcos+rve.z*rsin*dcos+rvr.z*dsin));
                 rose_lines_data[n_rose_lines_data]=rose_p1;
+
+                //
+                var rose_p1n=rose_p1.subtract(rpos);
+                rose_p1n.normalize();
+                var vector_r=[];
+                if (k==0) vector_r=rpos.subtract(zero);
+                if (k==1) vector_r=rpos.subtract(zero);
+                if (k==2) vector_r=new BABYLON.Vector3(0,1,0);
+                if (k==3) vector_r=new BABYLON.Vector3(0,1,0);
+                vector_r.normalize();
+
+                var angle_bo=Math.acos(BABYLON.Vector3.Dot(vector_r,rose_p1n));
+                rcolor=new BABYLON.Color4(1,1,0,1);
+                if (angle_bo>Math.PI/2.0) {
+                    rcolor=new BABYLON.Color4(1,1,0,0);
+                }
+                //
+
                 rose_lines_color_data[n_rose_lines_data]=rcolor;
                 n_rose_lines_data++; 
                                     
@@ -2315,6 +2444,20 @@ var calculate_lines=function() {
                                                 rpos.y+rd1*tmp1_o.y,
                                                 rpos.z+rd1*tmp1_o.z);
                     rose_lines_data[n_rose_lines_data]=rose_p1;
+
+                    //
+                    var rose_p1n=rose_p1.subtract(rpos);
+                    rose_p1n.normalize();
+                    var vector_r=rpos.subtract(zero);
+                    vector_r.normalize();
+
+                    var angle_bo=Math.acos(BABYLON.Vector3.Dot(vector_r,rose_p1n));
+                    rcolor=new BABYLON.Color4(0.5,0.5,0.5,1);
+                    if (angle_bo>Math.PI/2.0) {
+                        rcolor=new BABYLON.Color4(1,1,0,0);
+                    }
+                    //
+
                     rose_lines_color_data[n_rose_lines_data]=rcolor;
                     n_rose_lines_data++; 
                 }
@@ -2697,15 +2840,15 @@ var createScene = function () {
 
     //Material de la esfera roja
     var redMat = new BABYLON.StandardMaterial("rsph", scene);
-    redMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
-    redMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    redMat.specularColor = new BABYLON.Color3(0, 0, 0);
+    redMat.diffuseColor=BABYLON.Color3.Red();
     redMat.emissiveColor = BABYLON.Color3.Red();
     redMat.alpha=0.35;
 
     //Material de la esfera azul
     var blueMat = new BABYLON.StandardMaterial("bsph", scene);
-    blueMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
-    blueMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    blueMat.specularColor = new BABYLON.Color3(0,0,0);
+    blueMat.diffuseColor = BABYLON.Color3.Blue();
     blueMat.emissiveColor = BABYLON.Color3.Blue();
     blueMat.alpha=0.35;
 
@@ -2875,26 +3018,26 @@ var createScene = function () {
     //Esfera roja
     pos1=rlatlon_to_xyz(r,lat1,lon1,h1);
 
-    var redSphere = BABYLON.MeshBuilder.CreateSphere("red", {diameter:handler_radius}, scene);
+    redSphere = BABYLON.MeshBuilder.CreateSphere("red", {diameter:handler_radius}, scene);
     redSphere.material = redMat;
     redSphere.position=pos1;
 
     //Esfera azul
     pos2=rlatlon_to_xyz(r,lat2,lon2,h2);
 
-    var blueSphere = BABYLON.MeshBuilder.CreateSphere("blue", {diameter: handler_radius}, scene);
+    blueSphere = BABYLON.MeshBuilder.CreateSphere("blue", {diameter: handler_radius}, scene);
     blueSphere.material = blueMat;
     blueSphere.position=pos2;
     
     //Esfera roja sobre la tierra plana
     pos3=rlatlon_to_xyz_fe(rfe,lat1,lon1,h1);
-    var redSphere_fe = BABYLON.MeshBuilder.CreateSphere("red_fe", {diameter:handler_radius}, scene);
+    redSphere_fe = BABYLON.MeshBuilder.CreateSphere("red_fe", {diameter:handler_radius}, scene);
     redSphere_fe.material = redMat;
     redSphere_fe.position=pos3;
 
     //Esfera azul sobre la tierra plana
     pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2,h2);
-    var blueSphere_fe = BABYLON.MeshBuilder.CreateSphere("blue_fe", {diameter:handler_radius}, scene);
+    blueSphere_fe = BABYLON.MeshBuilder.CreateSphere("blue_fe", {diameter:handler_radius}, scene);
     blueSphere_fe.material = blueMat;
     blueSphere_fe.position=pos4;
 
@@ -3697,7 +3840,7 @@ var createScene = function () {
 
     //Texto de datos: distancias
     var data_text_1 = new BABYLON.GUI.TextBlock();
-    data_text_1.text="            ~ DISTANCES(km)\n"+
+    data_text_1.text="            ~ DISTANCES(km)  (BASELINE "+base_line.toFixed(0)+"km)\n"+
                      "\n"+
                      " ORTHODROMIC  "+ ("00"+(Math.round(distancia_sp)).toString()).slice(-5) + "   "
                                     + ("00"+(Math.round(distancia_fe_suma)).toString()).slice(-5) + "\n"+
@@ -4404,7 +4547,7 @@ var createScene = function () {
     //Texto del cuadro de opciones
     var opt_text = new BABYLON.GUI.TextBlock();
     opt_text.text="\n"+
-                  " LINES GLOW\n"+
+                  " LINES GLOW                    FE SIZE\n"+
                   " MOUSE SENS.\n\n";
     opt_text.color = "white";
     opt_text.fontSize = 12;
@@ -4436,6 +4579,47 @@ var createScene = function () {
         glo.intensity = glow_slider.value; 
     });
     opts_rect.addControl(glow_slider);
+
+
+    //Control del intensidad del efecto neón
+    fe_scale_slider = new BABYLON.GUI.Slider();
+    fe_scale_slider.minimum = 1;
+    fe_scale_slider.maximum = 0.5*Math.PI;
+    fe_scale_slider.value = 0.5*Math.PI;
+    fe_scale_slider.step=0.01;
+    fe_scale_slider.height = "11px";
+    fe_scale_slider.width = "90px";
+    fe_scale_slider.top=sl_top_pos+4;
+    fe_scale_slider.left="280px";
+    fe_scale_slider.background = "gray";
+    fe_scale_slider.color="gray";
+    fe_scale_slider.horizontalAlignment = al_left;
+    fe_scale_slider.verticalAlignment = al_top;			
+    fe_scale_slider.onValueChangedObservable.add(function(value) {
+
+        sfe=fe_scale_slider.value*1.0;
+        rfe=sfe*r;
+
+        EarthDisk.scaling=new BABYLON.Vector3(sfe/sfe0,sfe/sfe0,sfe/sfe0);
+
+        fe_pos=new BABYLON.Vector3(0,-fe_h,-4*rfe);
+        EarthDisk.position= fe_pos.subtract(zero);
+
+        if (fe_sel==1) {
+            camera.target=fe_pos;
+            //camera.radius=4*r*sfe;
+        }
+
+        pos3=rlatlon_to_xyz_fe(rfe,lat1,lon1,h1);
+        redSphere_fe.position=pos3.subtract(zero);
+
+        pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2,h2);
+        blueSphere_fe.position=pos4.subtract(zero);
+
+        update_all();
+        
+    });
+    opts_rect.addControl(fe_scale_slider);
 
     //Control de la sensibilidad del ratón
     //al mover las posiciones
@@ -5229,7 +5413,54 @@ var createScene = function () {
 		redSphere_fe.position=pos3;
         update_all();
         
-	});	
+	});
+    lat1_pe_btn.onPointerClickObservable.add( open_map_for_red=() => {
+
+        marker_type=1;
+
+        //Esconde el canvas de render 3d y
+        //hace visible el botón de volver
+        canvas.setAttribute("hidden","hidden");
+        done_button.removeAttribute("hidden");
+
+        //Elimina los marcadores existentes en el mapa
+        map.removeLayer(markers);
+
+        //Genera una nueva capa de marcadores
+        markers = new ol.layer.Vector({source: new ol.source.Vector()});
+        map.addLayer(markers);
+
+        //Coordenadas del marcador
+        map_latlon=[];
+        map_latlon[0]=lon1/dtor;
+        map_latlon[1]=lat1/dtor;
+
+        //Creación de marcador en la ubicación roja
+        var marker = new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat(map_latlon)));
+
+        //Fuente del símbolo del marcador rojo
+        if (marker_type==1) {
+            marker_icon_source='http://maps.google.com/mapfiles/kml/paddle/red-circle.png';
+        }
+        if (marker_type==2) {
+            marker_icon_source='http://maps.google.com/mapfiles/kml/paddle/blue-circle.png';
+        }
+
+        //Estilo de marcador
+        marker.setStyle(
+            new ol.style.Style({
+                image: new ol.style.Icon({
+                src: marker_icon_source,
+                anchor: [0.5, 1],
+                scale: 0.5
+                })
+            })
+        );
+
+        //Añade el marcador a la capa de marcadores
+        markers.getSource().addFeature(marker);
+
+    });
     loca_rect.addControl(lat1_pe_btn);
 
     //Ajuste fino de la latitud de la esfera roja (parte decimal)
@@ -5247,6 +5478,7 @@ var createScene = function () {
     lat1_pd_btn.verticalAlignment  = al_top;
     lat1_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     lat1_pd_btn.fontFamily = 'monospace';
+    lat1_pd_btn.onPointerClickObservable.add( function() { open_map_for_red(); });
     lat1_pd_btn.onWheelObservable.add(function(evt) {
 
         var val;
@@ -5295,6 +5527,7 @@ var createScene = function () {
     lon1_pe_btn.verticalAlignment  = al_top;
     lon1_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     lon1_pe_btn.fontFamily = 'monospace';
+    lon1_pe_btn.onPointerClickObservable.add( function() { open_map_for_red(); });
     lon1_pe_btn.onWheelObservable.add(function(evt) {
 
         var val;
@@ -5335,6 +5568,7 @@ var createScene = function () {
     lon1_pd_btn.verticalAlignment  = al_top;
     lon1_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     lon1_pd_btn.fontFamily = 'monospace';
+    lon1_pd_btn.onPointerClickObservable.add( function() { open_map_for_red(); });
     lon1_pd_btn.onWheelObservable.add(function(evt) {
 
         var val;
@@ -5379,6 +5613,8 @@ var createScene = function () {
     bear1_btn.verticalAlignment  = al_top;
     bear1_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     bear1_btn.fontFamily = 'monospace';
+    //Muestra el mapa de selección de la ubicación roja
+    //bear1_btn.onPointerClickObservable.add( function() { open_map_for_red(); });
     loca_rect.addControl(bear1_btn);
 
 
@@ -5407,7 +5643,6 @@ var createScene = function () {
 
         if (h1<0) h1=0;
         if (h1>999999) h1=999999;
-
 
         h1_alt_co=Math.PI/2.0-Math.asin(6371/(6371+h1/1000));
         
@@ -5519,7 +5754,53 @@ var createScene = function () {
 		blueSphere_fe.position=pos4;
         update_all();
         
-	});	
+	});
+    lat2_pe_btn.onPointerClickObservable.add( open_map_for_blue=() => {
+
+        marker_type=2;
+        //Oculta el canvas de render 3d y
+        //hace visible el botón de retorno
+        canvas.setAttribute("hidden","hidden");
+        done_button.removeAttribute("hidden");
+
+        //Elimina la capa existente de marcadores
+        map.removeLayer(markers);
+
+        //Crea una nueva capa de marcadores y la añade al mapa
+        markers = new ol.layer.Vector({source: new ol.source.Vector()});
+        map.addLayer(markers);
+
+        //Coordenadas de la ubicación azul
+        map_latlon=[];
+        map_latlon[0]=lon2/dtor;
+        map_latlon[1]=lat2/dtor;
+
+        //Crea un marcador en la ubicación azul
+        var marker = new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat(map_latlon)));
+
+        //Fuente del símbolo del marcador de la ubicación azul
+        if (marker_type==1) {
+            marker_icon_source='http://maps.google.com/mapfiles/kml/paddle/red-circle.png';
+        }
+        if (marker_type==2) {
+            marker_icon_source='http://maps.google.com/mapfiles/kml/paddle/blu-circle.png';
+        }
+
+        //Estilo del del marcador de la ubicación azul
+        marker.setStyle(
+            new ol.style.Style({
+                image: new ol.style.Icon({
+                src: marker_icon_source,
+                anchor: [0.5, 1],
+                scale: 0.5
+                })
+            })
+        );
+
+        //Añade el marcador azul a la capa de marcadores del mapa
+        markers.getSource().addFeature(marker);
+
+    });	
     loca_rect.addControl(lat2_pe_btn);
 
     //Ajuste fino de la latitud de la esfera azul (parte decimal)
@@ -5537,6 +5818,7 @@ var createScene = function () {
     lat2_pd_btn.verticalAlignment  = al_top;
     lat2_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     lat2_pd_btn.fontFamily = 'monospace';
+    lat2_pd_btn.onPointerClickObservable.add( function() {open_map_for_blue()});
     lat2_pd_btn.onWheelObservable.add(function(evt) {
 
         var val;
@@ -5585,6 +5867,7 @@ var createScene = function () {
     lon2_pe_btn.verticalAlignment  = al_top;
     lon2_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     lon2_pe_btn.fontFamily = 'monospace';
+    lon2_pe_btn.onPointerClickObservable.add( function() {open_map_for_blue()});
     lon2_pe_btn.onWheelObservable.add(function(evt) {
 
         var val;
@@ -5625,6 +5908,7 @@ var createScene = function () {
     lon2_pd_btn.verticalAlignment  = al_top;
     lon2_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     lon2_pd_btn.fontFamily = 'monospace';
+    lon2_pd_btn.onPointerClickObservable.add( function() {open_map_for_blue()});
     lon2_pd_btn.onWheelObservable.add(function(evt) {
 
         var val;
@@ -5669,6 +5953,8 @@ var createScene = function () {
     bear2_btn.verticalAlignment  = al_top;
     bear2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     bear2_btn.fontFamily = 'monospace';
+    //Muestra el mapa de selección de la ubicación azul
+    //bear2_btn.onPointerClickObservable.add( function() {open_map_for_blue()});
     loca_rect.addControl(bear2_btn);
 
 	 //Altura de la esfera roja (kilómetros)
@@ -6594,6 +6880,19 @@ var createScene = function () {
     moonaltaz1_btn.verticalAlignment  = al_top;
     moonaltaz1_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     moonaltaz1_btn.fontFamily = 'monospace';
+    moonaltaz1_btn.onPointerClickObservable.add(function() {
+
+        lat1=moon_latc*1.0;
+        lon1=moon_lonc*1.0;
+        pos3=rlatlon_to_xyz_fe(rfe,moon_latc,moon_lonc,h1);
+        pos1=rlatlon_to_xyz(r,moon_latc,moon_lonc,h1);
+
+        redSphere_fe.position=pos3.subtract(zero);
+        redSphere.position=pos1.subtract(zero);
+
+        update_all();
+
+    });
     moon_rect.addControl(moonaltaz1_btn);
 
     //Altura de La Luna desde la ubicación de la marca azul
@@ -6619,6 +6918,19 @@ var createScene = function () {
     moonaltaz2_btn.verticalAlignment  = al_top;
     moonaltaz2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     moonaltaz2_btn.fontFamily = 'monospace';
+    moonaltaz2_btn.onPointerClickObservable.add(function() {
+
+        lat2=moon_latc*1.0;
+        lon2=moon_lonc*1.0;
+        pos4=rlatlon_to_xyz_fe(rfe,moon_latc,moon_lonc,h2);
+        pos2=rlatlon_to_xyz(r,moon_latc,moon_lonc,h2);
+
+        blueSphere_fe.position=pos4.subtract(zero);
+        blueSphere.position=pos2.subtract(zero);
+
+        update_all();
+
+    });
     moon_rect.addControl(moonaltaz2_btn);
 
     //Paralaje de La Luna
@@ -6673,7 +6985,7 @@ var createScene = function () {
     var moon_tr_btn=BABYLON.GUI.Button.CreateSimpleButton("lines sun sph","TR");
     moon_tr_btn.width="20px";
     moon_tr_btn.height="17px";
-    moon_tr_btn.fontSize = 13;
+    moon_tr_btn.fontSize = 12;
     moon_tr_btn.thickness=1;
     moon_tr_btn.cornerRadius=4;
     moon_tr_btn.color="white"
@@ -6913,6 +7225,20 @@ var createScene = function () {
     sunaltaz1_btn.verticalAlignment  = al_top;
     sunaltaz1_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     sunaltaz1_btn.fontFamily = 'monospace';
+    sunaltaz1_btn.onPointerClickObservable.add(function() {
+
+        lat1=sun_latc*1.0;
+        lon1=sun_lonc*1.0;
+        pos3=rlatlon_to_xyz_fe(rfe,sun_latc,sun_lonc,h1);
+        pos1=rlatlon_to_xyz(r,sun_latc,sun_lonc,h1);
+
+        redSphere_fe.position=pos3.subtract(zero);
+        redSphere.position=pos1.subtract(zero);
+
+        calculate_lines();
+        update_all();
+
+    });
     sun_rect.addControl(sunaltaz1_btn);
     
     //Altura de La Luna desde la ubicación de la marca azul
@@ -6936,6 +7262,20 @@ var createScene = function () {
     sunaltaz2_btn.verticalAlignment  = al_top;
     sunaltaz2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
     sunaltaz2_btn.fontFamily = 'monospace';
+    sunaltaz2_btn.onPointerClickObservable.add(function() {
+
+        lat2=sun_latc*1.0;
+        lon2=sun_lonc*1.0;
+        pos4=rlatlon_to_xyz_fe(rfe,sun_latc,sun_lonc,h2);
+        pos2=rlatlon_to_xyz(r,sun_latc,sun_lonc,h2);
+
+        blueSphere_fe.position=pos4.subtract(zero);
+        blueSphere.position=pos2.subtract(zero);
+
+        calculate_lines();
+        update_all();
+
+    });
     sun_rect.addControl(sunaltaz2_btn);
 
     //Datos del Sol: Disstancia, altura sobre la TP, paralaje
@@ -7807,6 +8147,51 @@ var createScene = function () {
 
     });
 
+    //Botón de salida del mapa de selección de ubicación
+    done_button.addEventListener("click", function() {
+
+        //Hace visible el canvas 3d,
+        //oculta el botón de retorno y
+        //Actualiza el canvas
+        canvas.removeAttribute("hidden");
+        done_button.setAttribute("hidden", "hidden");
+        engine.resize();
+
+        //Ubicación de la esfera roja
+        if (marker_type==1) {
+            //Cambia las coordenadas de la ubicación roja
+            // en función de la selección del mapa
+            lon1=map_latlon[0]*dtor;
+            lat1=map_latlon[1]*dtor;
+
+            //cambia las posiciones de la esfera roja de ubicación
+            //sobre la esfera y sobre el plano
+            pos1=rlatlon_to_xyz(r,lat1,lon1,h1);
+            redSphere.position=pos1.subtract(zero);
+            pos3=rlatlon_to_xyz_fe(rfe,lat1,lon1,h1);
+            redSphere_fe.position=pos3.subtract(zero);
+        }
+
+        //Ubicación de la esfera azul
+        if (marker_type==2) {
+            //Cambia las coordenadas de la ubicación azul
+            //En función de la selección del mapa
+            lon2=map_latlon[0]*dtor;
+            lat2=map_latlon[1]*dtor;
+
+            //Cambia las posiciones de la esfera azul de ubicación
+            //sobre la esfera y sobre el plano
+            pos2=rlatlon_to_xyz(r,lat2,lon2,h2);
+            blueSphere.position=pos2.subtract(zero);
+            pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2,h2);
+            blueSphere_fe.position=pos4.subtract(zero);
+        }
+
+        //Actualiza todos los cálculos
+        update_all();
+
+    });
+
     var update_all=function() {
 
         //Cálculo de las líneas
@@ -7851,7 +8236,7 @@ var createScene = function () {
         }
         
         //Actualización de distancias en GUI
-         data_text_1.text="            ~ DISTANCES(km)\n"+
+         data_text_1.text="            ~ DISTANCES(km)  (BASELINE "+base_line.toFixed(0)+"km)\n"+
                      "\n"+
                      " ORTHODROMIC  "+ ("00"+(Math.round(distancia_sp)).toString()).slice(-5) + "   "
                                     + dofe_opt + "\n"+
