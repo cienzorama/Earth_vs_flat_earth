@@ -186,12 +186,12 @@
 //|              sobre la "tierra plana" en este  |
 //|              programa no es más que una       |
 //|              proyección sobre el disco de     |
-//|              cálculos previamente realizados  |
+//|              cálculos préviamente realizados  |
 //|              sobre la esfera.                 |
 //|                                               |
 //|                                               |
 //|                                               |
-//| v0.50cb   14/07/2023                          |
+//| v0.50cb   24/08/2023                          |
 //|                                               |
 //|            cienzorama@gmail.com               |
 //|-----------------------------------------------|
@@ -285,7 +285,10 @@ line_color_sun=new BABYLON.Color3(1,1,0);
 
 //Posición del centro de la esfera y el disco
 zero=new BABYLON.Vector3(0,0,0);
-fe_pos=new BABYLON.Vector3(0,-fe_h,-4*rfe);
+nan=new BABYLON.Vector3(NaN,NaN,NaN);
+fe_angle=0;
+//fe_pos=new BABYLON.Vector3(0,-fe_h,-4*rfe);
+fe_pos=new BABYLON.Vector3(4*rfe*Math.sin(fe_angle),-fe_h,-4*rfe*Math.cos(fe_angle));
 
 //Distancias
 distancia_sp=0;
@@ -375,14 +378,14 @@ sun_sphere_pos=new BABYLON.Vector3(0,0,0);
 sun_fe_pos=new BABYLON.Vector3(0,0,0);
 
 //Trayectoria del Sol cenital sobre la esfera y el disco
-sun_tr_line_data=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
-sun_tr_line_data_fe=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
+sun_tr_line_data=[ nan,nan];
+sun_tr_line_data_fe=[ nan,nan];
 sun_tr_np=2;
 sun_tr_a=0;
 
 //Trayectoria de La Luna cenital sobre la esfera y el disco
-moon_tr_line_data=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
-moon_tr_line_data_fe=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
+moon_tr_line_data=[ nan,nan];
+moon_tr_line_data_fe=[ nan,nan];
 moon_tr_np=2;
 moon_tr_a=0;
 
@@ -483,8 +486,8 @@ additional_model_info=0;
 //Datos de iluminación
 //ilu_data_fe=[];
 //ilu_data_sp=[];
-ilu_data_fe=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
-ilu_data_sp=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
+ilu_data_fe=[ nan,nan];
+ilu_data_sp=[ nan,nan];
 ilu_is_visible=0;
 ilu_alpha=0.5;
 ilu_color=new BABYLON.Color3(0.75,0.75,0.25);
@@ -766,7 +769,7 @@ function calc_sun_pos() {
     var t2=t*t;
     var t3=t2*t;
 
-	var ecl=ecl = 23.4393 - 3.563E-7 * d2k;
+	var ecl = 23.4393 - 3.563E-7 * d2k;
 
     ecl=ecl*dtor;
 
@@ -946,7 +949,7 @@ function calc_moon_ori() {
 function calc_moon_pos() {
 
     var d2k=(JD-2451543.5);
-	var ecl=ecl = 23.4393 - 3.563E-7 * d2k;
+	var ecl = 23.4393 - 3.563E-7 * d2k;
 
     ecl=ecl*dtor;
 
@@ -1083,7 +1086,7 @@ function calc_moon_pos_old() {
     //Días desde el 2000.0
     var d2k=(JD-2451543.5);
     //Oblicuidad de la eclíptica
-	var ecl=ecl = 23.4393 - 3.563E-7 * d2k;
+	var ecl= 23.4393 - 3.563E-7 * d2k;
 
     ecl=ecl*dtor;
 
@@ -1501,7 +1504,7 @@ var calculate_lines=function() {
 
         line_data_fe[i]=rlatlon_to_xyz_fe(rfe,lat_sp,lon_sp,1e4);
         
-        if (lat_sp<-Math.PI/2*0.98 && i>0 && i<ndiv)  line_data_fe[i]=new BABYLON.Vector3(NaN,NaN,NaN);
+        if (lat_sp<-Math.PI/2*0.98 && i>0 && i<ndiv)  line_data_fe[i]=nan.subtract(zero);
         
         //Línea loxodrómica sobre la esfera
         var lon_sp2=lon01+delta_lon*inc;
@@ -1963,7 +1966,7 @@ var calculate_lines=function() {
     moon_cut_h=moon_cut_p.y*1.0;
 
     if (moon_cut_h<=0 || fe_moon1.y<=0 || fe_moon2.y<=0) {
-        moon_cut_p=new BABYLON.Vector3(NaN,NaN,NaN);
+        moon_cut_p=nan.subtract(zero);
         moon_cut_h=NaN;
     }
 
@@ -2000,7 +2003,7 @@ var calculate_lines=function() {
     sun_cut_h=sun_cut_p.y*1.0;
 
     if (sun_cut_h<=0 || fe_sun1.y<=0 || fe_sun2.y<=0) {
-        sun_cut_p=new BABYLON.Vector3(NaN,NaN,NaN);
+        sun_cut_p=nan.subtract(zero);
         sun_cut_h=NaN;
     }
 
@@ -2222,8 +2225,8 @@ var calculate_lines=function() {
     
     //Rosa de rumbos para los observadores
     //sobre la esfera y la tierra plana
-    rose_lines_data=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
-    rose_lines_color_data=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
+    rose_lines_data=[nan,nan];
+    rose_lines_color_data=[nan,nan];
     n_rose_lines_data=0;
     var temp_moon_pos=[];
 
@@ -2330,7 +2333,7 @@ var calculate_lines=function() {
 
                     //Añade un punto nulo a la lista
                     //Fin de la cadena de líneas
-                    rose_p3=new BABYLON.Vector3(NaN,NaN,NaN);
+                    rose_p3=nan.subtract(zero);
                     rose_lines_data[n_rose_lines_data]=rose_p3;
                     rose_lines_color_data[n_rose_lines_data]=rcolor;
                     n_rose_lines_data++;                                    
@@ -2366,7 +2369,7 @@ var calculate_lines=function() {
             n_rose_lines_data++;
             //Añade un punto nulo a la lista
             //Fin de la cadena de líneas
-            rose_p3=new BABYLON.Vector3(NaN,NaN,NaN);
+            rose_p3=nan.subtract(zero);
             rose_lines_data[n_rose_lines_data]=rose_p3;
             rose_lines_color_data[n_rose_lines_data]=rcolor;
             n_rose_lines_data++;            
@@ -2427,7 +2430,7 @@ var calculate_lines=function() {
 
             //Añade un punto nulo a la lista
             //Fin de la cadena de líneas
-            rose_p3=new BABYLON.Vector3(NaN,NaN,NaN);
+            rose_p3=nan.subtract(zero);
             rose_lines_data[n_rose_lines_data]=rose_p3;
             rose_lines_color_data[n_rose_lines_data]=rcolor;
             n_rose_lines_data++;
@@ -2510,7 +2513,7 @@ var calculate_lines=function() {
 
             //Añade un punto nulo a la lista
             //Fin de la cadena de líneas
-            rose_p3=new BABYLON.Vector3(NaN,NaN,NaN);
+            rose_p3=nan.subtract(zero);
             rose_lines_data[n_rose_lines_data]=rose_p3;
             rose_lines_color_data[n_rose_lines_data]=rcolor;
             n_rose_lines_data++;
@@ -2653,14 +2656,22 @@ var calculate_lines=function() {
             }
 
         }
-
     
     }
 
 
     //Cálculo de eclipses solares
     //Líneas de umbra y penumbra
-    if (1) {
+    //El cálculo sólo se realia si la elongación
+    //de La Luna es inferior a 4 grados
+    if (Math.abs(meloc)>4.0) {
+
+        eclipse_data_umbra=[nan,nan];
+        eclipse_data_umbra_fe=[nan,nan];
+        eclipse_data_penumbra=[nan,nan];
+        eclipse_data_penumbra_fe=[nan,nan];
+
+    } else  {
 
         var eclipse_np=200;
 
@@ -2715,7 +2726,7 @@ var calculate_lines=function() {
                 uu.normalize();
                 var oo=ecl_vm.subtract(zero);
                 var cc=zero.subtract(zero);
-                var rr=rdeltar;
+                var rr=rdeltar*1.005;
 
                 var oo_cc=oo.subtract(cc);
                 var uu_oo_cc=-1.0*BABYLON.Vector3.Dot(oo_cc,uu);
@@ -2739,21 +2750,23 @@ var calculate_lines=function() {
                         var ecl_lat=Math.asin(eclipse_data_umbra[i].y/rr);
                         var ecl_lon=Math.atan2(eclipse_data_umbra[i].z,eclipse_data_umbra[i].x);
                         eclipse_data_umbra_fe[i]=rlatlon_to_xyz_fe(rfe,ecl_lat,ecl_lon,0);
+                        eclipse_data_umbra_fe[i].y+=0.15;
                     } else {
                         eclipse_data_penumbra[i]=ecl_vm.add(uu.scale(ecl_d));
                         var ecl_lat=Math.asin(eclipse_data_penumbra[i].y/rr);
                         var ecl_lon=Math.atan2(eclipse_data_penumbra[i].z,eclipse_data_penumbra[i].x);
                         eclipse_data_penumbra_fe[i]=rlatlon_to_xyz_fe(rfe,ecl_lat,ecl_lon,0);
+                        eclipse_data_penumbra_fe[i].y+=0.15;
                     }
 
                 } else {
 
                     if (j==0) {
-                        eclipse_data_umbra[i]=new BABYLON.Vector3(NaN,NaN,NaN);
-                        eclipse_data_umbra_fe[i]=new BABYLON.Vector3(NaN,NaN,NaN);
+                        eclipse_data_umbra[i]=nan.subtract(zero);
+                        eclipse_data_umbra_fe[i]=nan.subtract(zero);
                     } else {
-                        eclipse_data_penumbra[i]=new BABYLON.Vector3(NaN,NaN,NaN);
-                        eclipse_data_penumbra_fe[i]=new BABYLON.Vector3(NaN,NaN,NaN);
+                        eclipse_data_penumbra[i]=nan.subtract(zero);
+                        eclipse_data_penumbra_fe[i]=nan.subtract(zero);
                     }
 
                 }
@@ -2830,8 +2843,8 @@ var createScene = function () {
     //elementos en las cámaras adicionales
     //para evitar que muestre la TP y sus
     //elementos
-    camera_moon_1.minZ=300;
-    camera_moon_2.minZ=300;
+    camera_moon_1.minZ=0.001;
+    camera_moon_2.minZ=0.001;
     camera_moon_1.maxZ=300000;
     camera_moon_2.maxZ=300000;
 
@@ -2839,39 +2852,84 @@ var createScene = function () {
     var light = new BABYLON.PointLight("omni", new BABYLON.Vector3(0, 2000, 0), scene);
 
     //Material de la esfera roja
-    var redMat = new BABYLON.StandardMaterial("rsph", scene);
+    redMat = new BABYLON.StandardMaterial("rsph", scene);
     redMat.specularColor = new BABYLON.Color3(0, 0, 0);
     redMat.diffuseColor=BABYLON.Color3.Red();
     redMat.emissiveColor = BABYLON.Color3.Red();
     redMat.alpha=0.35;
+    redMat.useLogarithmicDepth = true;
 
     //Material de la esfera azul
-    var blueMat = new BABYLON.StandardMaterial("bsph", scene);
+    blueMat = new BABYLON.StandardMaterial("bsph", scene);
     blueMat.specularColor = new BABYLON.Color3(0,0,0);
     blueMat.diffuseColor = BABYLON.Color3.Blue();
     blueMat.emissiveColor = BABYLON.Color3.Blue();
     blueMat.alpha=0.35;
+    blueMat.useLogarithmicDepth = true;
+
+    //Material de la esfera roja
+    redMat2 = new BABYLON.StandardMaterial("rsph", scene);
+    redMat2.specularColor = new BABYLON.Color3(0, 0, 0);
+    redMat2.diffuseColor=BABYLON.Color3.Red();
+    redMat2.emissiveColor = BABYLON.Color3.Red();
+    redMat2.alpha=0.35;
+    redMat2.useLogarithmicDepth = true;
+
+    //Material de la esfera azul
+    blueMat2 = new BABYLON.StandardMaterial("bsph", scene);
+    blueMat2.specularColor = new BABYLON.Color3(0,0,0);
+    blueMat2.diffuseColor = BABYLON.Color3.Blue();
+    blueMat2.emissiveColor = BABYLON.Color3.Blue();
+    blueMat2.alpha=0.35;
+    blueMat2.useLogarithmicDepth = true;
 
     //Material de la esfera auxiliar
     var auxMat = new BABYLON.StandardMaterial("asph", scene);
-    auxMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
-    auxMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    auxMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    auxMat.specularColor = new BABYLON.Color3(0, 0, 0);
+    auxMat.ambientColor = new BABYLON.Color3(0,0,0);
     auxMat.emissiveColor = BABYLON.Color3.Green();
     auxMat.alpha=0.5;
+    auxMat.useLogarithmicDepth = true;
+
+    //Material de la esfera auxiliar 2
+    var auxMat2 = new BABYLON.StandardMaterial("asph", scene);
+    auxMat2.diffuseColor = new BABYLON.Color3(1,1,1);
+    auxMat2.specularColor = new BABYLON.Color3(0,0,0);
+    auxMat2.emissiveColor = new BABYLON.Color3(1,1,1);
+    auxMat2.useLogarithmicDepth = true;
 
     //Material de la esfera posición de corte para La Luna
-    var mooncutMat = new BABYLON.StandardMaterial("asph", scene);
+    mooncutMat = new BABYLON.StandardMaterial("asph", scene);
     mooncutMat.diffuseColor = new BABYLON.Color3(0.7,0.7,0.7);
-    mooncutMat.specularColor = new BABYLON.Color3(0.7,0.7,0.7);
+    mooncutMat.specularColor = new BABYLON.Color3(0,0,0);
+    mooncutMat.ambientColor= new BABYLON.Color3(1,1,1);
     mooncutMat.emissiveColor = new BABYLON.Color3(0.7,0.7,0.7);
-    mooncutMat.alpha=0.9;
+    mooncutMat.useLogarithmicDepth=true;
 
     //Material de la esfera posición de corte para El Sol
-    var suncutMat = new BABYLON.StandardMaterial("asph", scene);
+    suncutMat = new BABYLON.StandardMaterial("asph", scene);
     suncutMat.diffuseColor = new BABYLON.Color3(1,1,0);
-    suncutMat.specularColor = new BABYLON.Color3(1,1,0);
+    suncutMat.specularColor = new BABYLON.Color3(0,0,0);
+    suncutMat.ambientColor= new BABYLON.Color3(1,1,1);
     suncutMat.emissiveColor = new BABYLON.Color3(1,1,0);
-    suncutMat.alpha=0.9;
+    suncutMat.useLogarithmicDepth=true;
+
+    //Material de la esfera posición de corte para La Luna
+    mooncutMat2 = new BABYLON.StandardMaterial("asph", scene);
+    mooncutMat2.diffuseColor = new BABYLON.Color3(0.7,0.7,0.7);
+    mooncutMat2.specularColor = new BABYLON.Color3(0,0,0);
+    mooncutMat2.ambientColor= new BABYLON.Color3(1,1,1);
+    mooncutMat2.emissiveColor = new BABYLON.Color3(0.7,0.7,0.7);
+    mooncutMat2.useLogarithmicDepth=true;
+
+    //Material de la esfera posición de corte para El Sol
+    suncutMat2 = new BABYLON.StandardMaterial("asph", scene);
+    suncutMat2.diffuseColor = new BABYLON.Color3(1,1,0);
+    suncutMat2.specularColor = new BABYLON.Color3(0,0,0);
+    suncutMat2.ambientColor= new BABYLON.Color3(1,1,1);
+    suncutMat2.emissiveColor = new BABYLON.Color3(1,1,0);
+    suncutMat2.useLogarithmicDepth=true;
 
     //Textura y material de La Tierra
     //Baja resolución
@@ -2894,12 +2952,14 @@ var createScene = function () {
     EarthMat.diffuseTexture.uScale=-1;
     EarthMat.diffuseTexture.vScale=-1;
     EarthMat.specularColor = new BABYLON.Color3(0,0,0);
+    EarthMat.useLogarithmicDepth = true;
     
     //Textura y material de la tierra plana
     var url_fem="https://upload.wikimedia.org/wikipedia/commons/7/79/Flat_earth.jpg";
     FlatEarthMat=new BABYLON.StandardMaterial("Flatearth", scene);
     FlatEarthMat.diffuseTexture = new BABYLON.Texture(url_fem, scene);
     FlatEarthMat.specularColor = new BABYLON.Color3(0,0,0);
+    FlatEarthMat.useLogarithmicDepth = true;
     //FlatEarthMat.emissiveColor= ilu_text;
 
     //Esfera de La Tierra
@@ -2926,6 +2986,7 @@ var createScene = function () {
     MoonMat.diffuseTexture.uScale=-1;
     MoonMat.diffuseTexture.vScale=-1;
     MoonMat.specularColor = new BABYLON.Color3(0,0,0);
+    MoonMat.useLogarithmicDepth = true;
 
     var MoonSphere = BABYLON.MeshBuilder.CreateSphere("Moon", {segments:20, diameter:2*0.27262*r}, scene);
     MoonSphere.material = MoonMat;
@@ -2938,7 +2999,7 @@ var createScene = function () {
     SunMat.diffuseColor = new BABYLON.Color3(1, 1, 0);
     SunMat.emissiveColor = new BABYLON.Color3(1,1,0);
     SunMat.backFaceCulling = true;
-    //MoonMat.specularColor = new BABYLON.Color3(0,0,0);
+    SunMat.useLogarithmicDepth = true;
 
     var SunSphere = BABYLON.MeshBuilder.CreateSphere("Sun", {segments:20, diameter:2*109.30*r}, scene);
     SunSphere.material = SunMat;
@@ -2986,33 +3047,37 @@ var createScene = function () {
     }
 
     //Marcador de posicion de La Luna
-    var moonMat = new BABYLON.StandardMaterial("moonMat", scene);
-    moonMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
-    moonMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
-    moonMat.emissiveColor = new BABYLON.Color3(1,1,1);
-    moonMat.alpha=0.9;
+    var moonMat1 = new BABYLON.StandardMaterial("moonMat", scene);
+    moonMat1.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    moonMat1.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    moonMat1.emissiveColor = new BABYLON.Color3(1,1,1);
+    moonMat1.alpha=0.9;
+    moonMat1.useLogarithmicDepth = true;
+
     var moonSphere = BABYLON.MeshBuilder.CreateSphere("sun", {diameter:0.3}, scene);
-    moonSphere.material = moonMat;
+    moonSphere.material = moonMat1;
     moonSphere.position=moon_sphere_pos;
 
     //Marcador de posicion de La Luna sobre la tierra plana
     var moonFe = BABYLON.MeshBuilder.CreateSphere("moon", {diameter:0.5}, scene);
-    moonFe.material = moonMat;
+    moonFe.material = moonMat1;
     moonFe.position=moon_fe_pos;
 
      //Marcador de posicion del Sol sobre La Tierra
-    var sunMat = new BABYLON.StandardMaterial("moonMat", scene);
-    sunMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
-    sunMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
-    sunMat.emissiveColor = new BABYLON.Color3(1,1,0);
-    sunMat.alpha=0.9;
+    var sunMat1 = new BABYLON.StandardMaterial("moonMat", scene);
+    sunMat1.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    sunMat1.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    sunMat1.emissiveColor = new BABYLON.Color3(1,1,0);
+    sunMat1.alpha=0.9;
+    sunMat1.useLogarithmicDepth = true;
+
     var sunSphere = BABYLON.MeshBuilder.CreateSphere("moon", {diameter:0.3}, scene);
-    sunSphere.material = sunMat;
+    sunSphere.material = sunMat1;
     sunSphere.position=sun_sphere_pos;
 
     //Marcador de posicion del Sol sobre la tierra plana
     var sunFe = BABYLON.MeshBuilder.CreateSphere("sun", {diameter:0.5}, scene);
-    sunFe.material = sunMat;
+    sunFe.material = sunMat1;
     sunFe.position = sun_fe_pos;
     
     //Esfera roja
@@ -3083,91 +3148,135 @@ var createScene = function () {
     MoonSphere.rotate(BABYLON.Axis.Y, moon_ori2, BABYLON.Space.WORLD);
     MoonSphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
 
+    //Material de la línea ortodrómica
+    ol_mat = new BABYLON.StandardMaterial("asph", scene);
+    ol_mat.diffuseColor = line_color_orto;
+    ol_mat.specularColor = new BABYLON.Color3(0,0,0);
+    ol_mat.emissiveColor = line_color_orto;
+    ol_mat.useLogarithmicDepth=true;
+
     //Línea otrodrómica sobre la esfera
     ortodromic_line =BABYLON.MeshBuilder.CreateLines ( "ortodromic_line", {points: line_data},scene,true); 
-    ortodromic_line.color = line_color_orto;
+    ortodromic_line.material=ol_mat;
     ortodromic_line.isVisible=orto_es_visible;
     
     //Línea orotodrímica proyectada sobre la tierra plana
     ortodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "ortodromic_line_fe", {points: line_data_fe},scene,true); 
-    ortodromic_line_fe.color = line_color_orto;
+    ortodromic_line_fe.color = ol_mat;
     ortodromic_line_fe.isVisible=orto_es_visible;
+
+    //Material de la línea loxodromica
+    ll_mat = new BABYLON.StandardMaterial("asph", scene);
+    ll_mat.diffuseColor = line_color_loxo;
+    ll_mat.specularColor = new BABYLON.Color3(0,0,0);
+    ll_mat.emissiveColor = line_color_loxo;
+    ll_mat.useLogarithmicDepth=true;
 
     //Línea loxodrómica sobre la esfera
     loxodromic_line =BABYLON.MeshBuilder.CreateLines ( "loxodromic_line", {points: line_data_lox},scene,true); 
-    loxodromic_line.color = line_color_loxo;
+    loxodromic_line.material=ll_mat;
     loxodromic_line.isVisible=loxo_es_visible;
 
     //Línea loxodrómica proyectada sobre la tierra plana
     loxodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "loxodromic_line", {points: line_data_lox_fe},scene,true); 
-    loxodromic_line_fe.color = line_color_loxo;
+    loxodromic_line_fe.color = ll_mat;
     loxodromic_line_fe.isVisible=loxo_es_visible;
+
+    //Material de la línea flatodrómica
+    fl_mat = new BABYLON.StandardMaterial("asph", scene);
+    fl_mat.diffuseColor = line_color_flat;
+    fl_mat.specularColor = new BABYLON.Color3(0,0,0);
+    fl_mat.emissiveColor = line_color_flat;
+    fl_mat.useLogarithmicDepth=true;
 
     //Línea flatodromica sobre la tierra plana
     flatodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "flatodromic_line", {points: line_data_flat_fe},scene,true); 
-    flatodromic_line_fe.color = line_color_flat;
+    flatodromic_line_fe.material=fl_mat;
     flatodromic_line_fe.isVisible=flato_es_visible;
 
     //Línea flatodromica sobre la esfera
     flatodromic_line_sp =BABYLON.MeshBuilder.CreateLines ( "flatodromic_line", {points: line_data_flat_sp},scene,true); 
-    flatodromic_line_sp.color = line_color_flat;
+    flatodromic_line_sp.material=fl_mat;
     flatodromic_line_sp.isVisible=flato_es_visible;
+
+    //Material de la línea equiangular
+    el_mat = new BABYLON.StandardMaterial("asph", scene);
+    el_mat.diffuseColor = line_color_eqac;
+    el_mat.specularColor = new BABYLON.Color3(0,0,0);
+    el_mat.emissiveColor = line_color_eqac;
+    el_mat.useLogarithmicDepth=true;
 
     //Línea equiangular sobre la tierra plana
     equiangular_line_fe =BABYLON.MeshBuilder.CreateLines ( "equiangular_line", {points: line_data_eqac_fe},scene,true); 
-    equiangular_line_fe.color = line_color_eqac;
+    equiangular_line_fe.material=el_mat;
     equiangular_line_fe.isVisible=eqac_es_visible;
 
     //Línea equiangular sobre la esfera
     equiangular_line_sp =BABYLON.MeshBuilder.CreateLines ( "equiangular_line", {points: line_data_eqac_sp},scene,true); 
-    equiangular_line_sp.color = line_color_eqac;
+    equiangular_line_sp.material=el_mat;
     equiangular_line_sp.isVisible=eqac_es_visible;
+
+    //Material de las líneas hacia La Luna
+    ml_mat=new BABYLON.StandardMaterial("ml_mat", scene);
+    ml_mat.diffuseColor=line_color_moon;
+    ml_mat.ambientColor=new BABYLON.Color3(1,1,1);
+    ml_mat.specularColor=new BABYLON.Color3(0,0,0);
+    ml_mat.emissiveColor=new BABYLON.Color3(1,1,1);
+    ml_mat.useLogarithmicDepth=true;
+
+    //Material de las líneas hacia el Sol
+    sl_mat=new BABYLON.StandardMaterial("ml_mat", scene);
+    sl_mat.diffuseColor=line_color_sun;
+    sl_mat.ambientColor=new BABYLON.Color3(1,1,1);
+    sl_mat.specularColor=new BABYLON.Color3(0,0,0);
+    sl_mat.emissiveColor=new BABYLON.Color3(1,1,1);
+    sl_mat.useLogarithmicDepth=true;
 
     //Lineas de La Tierra a La Luna
     moon_line_1 =BABYLON.MeshBuilder.CreateLines ( "moon_line_1", {points: moon_line_data_1},scene,true); 
-    moon_line_1.color=line_color_moon;
+    moon_line_1.material=ml_mat;
     moon_line_1.isVisible=moon_tg_visible;
     moon_line_2 =BABYLON.MeshBuilder.CreateLines ( "moon_line_2", {points: moon_line_data_2},scene,true); 
-    moon_line_2.color=line_color_moon;
+    moon_line_2.material=ml_mat;
     moon_line_2.isVisible=moon_tg_visible;
     moon_line_c =BABYLON.MeshBuilder.CreateLines ( "moon_line_c", {points: moon_line_data_c},scene,true); 
-    moon_line_c.color=line_color_moon;
+    moon_line_c.material=ml_mat;
     moon_line_c.isVisible=moon_tg_visible;
 
     //Lineas de La Tierra del Sol
     sun_line_1 =BABYLON.MeshBuilder.CreateLines ( "sun_line_1", {points: sun_line_data_1},scene,true); 
-    sun_line_1.color=line_color_sun;
+    sun_line_1.material=sl_mat;
     sun_line_1.isVisible=sun_tg_visible;
     sun_line_2 =BABYLON.MeshBuilder.CreateLines ( "sun_line_2", {points: sun_line_data_2},scene,true); 
-    sun_line_2.color=line_color_sun;
+    sun_line_2.material=sl_mat;
     sun_line_2.isVisible=sun_tg_visible;
     sun_line_c =BABYLON.MeshBuilder.CreateLines ( "sun_line_c", {points: sun_line_data_c},scene,true); 
-    sun_line_c.color=line_color_sun;
+    sun_line_c.material=sl_mat;
     sun_line_c.isVisible=sun_tg_visible;
 
     //Líneas de dirección de la ubicaciones sobre la TP a La Luna
     fe_moon_line_1 =BABYLON.MeshBuilder.CreateLines ( "fe_moon_line_1", {points: fe_moon_line_data_1},scene,true); 
-    fe_moon_line_1.color=line_color_moon;
+    fe_moon_line_1.material=sl_mat;
     fe_moon_line_1.isVisible=moon_tp_visible;
     fe_moon_line_2 =BABYLON.MeshBuilder.CreateLines ( "fe_moon_line_2", {points: fe_moon_line_data_2},scene,true); 
-    fe_moon_line_2.color=line_color_moon;
+    fe_moon_line_2.material=sl_mat;
     fe_moon_line_2.isVisible=moon_tp_visible;
 
     //Líneas de dirección de la ubicaciones sobre la TP al Sol
     fe_sun_line_1 =BABYLON.MeshBuilder.CreateLines ( "fe_sun_line_1", {points: fe_sun_line_data_1},scene,true); 
-    fe_sun_line_1.color=line_color_sun;
+    fe_sun_line_1.material=sl_mat;
     fe_sun_line_1.isVisible=sun_tp_visible;
     fe_sun_line_2 =BABYLON.MeshBuilder.CreateLines ( "fe_sun_line_2", {points: fe_sun_line_data_2},scene,true); 
-    fe_sun_line_2.color=line_color_sun;
+    fe_sun_line_2.material=sl_mat;
     fe_sun_line_2.isVisible=sun_tp_visible;
 
     //Línea de iluminación
     ilu_line_sp =BABYLON.MeshBuilder.CreateLines ( "ilumination line", {points: ilu_data_sp},scene,true); 
-    ilu_line_sp.color=ilu_color;
+    ilu_line_sp.material=auxMat2;
     ilu_line_sp.alpha=ilu_alpha;
     ilu_line_sp.isVisible=ilu_is_visible;
     ilu_line_fe =BABYLON.MeshBuilder.CreateLines ( "ilumination line", {points: ilu_data_fe},scene,true); 
-    ilu_line_fe.color=ilu_color;
+    ilu_line_fe.material=auxMat2;
     ilu_line_fe.alpha=ilu_alpha;
     ilu_line_fe.isVisible=ilu_is_visible;
 
@@ -3176,24 +3285,28 @@ var createScene = function () {
     redArrowMat.diffuseColor = new BABYLON.Color3(1,0,0);
     redArrowMat.specularColor = new BABYLON.Color3(1,0,0);
     redArrowMat.emissiveColor = new BABYLON.Color3(1,0,0);
+    redArrowMat.useLogarithmicDepth=true;
     redArrowMat.alpha=0.9;
 
     var blueArrowMat = new BABYLON.StandardMaterial("red arrow", scene);
     blueArrowMat.diffuseColor = new BABYLON.Color3(0,0,1);
     blueArrowMat.specularColor = new BABYLON.Color3(0,0,1);
     blueArrowMat.emissiveColor = new BABYLON.Color3(0,0,1);
+    blueArrowMat.useLogarithmicDepth=true;
     blueArrowMat.alpha=0.9;
 
     var sunArrowMat = new BABYLON.StandardMaterial("red arrow", scene);
     sunArrowMat.diffuseColor = line_color_sun;
     sunArrowMat.specularColor = line_color_sun;
     sunArrowMat.emissiveColor = line_color_sun;
+    sunArrowMat.useLogarithmicDepth=true;
     sunArrowMat.alpha=0.9;
 
     var moonArrowMat = new BABYLON.StandardMaterial("red arrow", scene);
     moonArrowMat.diffuseColor = line_color_moon;
     moonArrowMat.specularColor = line_color_moon;
     moonArrowMat.emissiveColor = line_color_moon;
+    moonArrowMat.useLogarithmicDepth=true;
     moonArrowMat.alpha=0.9;
 
     //Flechas de dirección del Sol en la TP
@@ -3257,6 +3370,7 @@ var createScene = function () {
     //shadowEarthMat.specularColor = new BABYLON.Color3(0.1,0.1,0.1);
     //shadowEarthMat.emissiveColor = new BABYLON.Color3(0.1,0.1,0.1);
     shadowEarthMat.alpha=0.8;
+    shadowEarthMat.useLogarithmicDepth = true;
 
     //Sombra de la Tierra 
     shadowEarth = BABYLON.MeshBuilder.CreateTube(
@@ -3297,7 +3411,7 @@ var createScene = function () {
     moon_cut_sphere.isVisible=moon_tp_visible*moon_tp_cut_visible;
 
     moon_cut_line =BABYLON.MeshBuilder.CreateLines ( "moon_cut_line", {points: moon_cut_line_data},scene,true); 
-    moon_cut_line.color=new BABYLON.Color3(0.7, 0.7, 0.7);
+    moon_cut_line.material=mooncutMat2;
     moon_cut_line.isVisible=moon_tp_visible*moon_tp_cut_visible;
 
     //Esfera de corte y línea de corte para El Sol
@@ -3307,59 +3421,76 @@ var createScene = function () {
     sun_cut_sphere.isVisible=sun_tp_visible*sun_tp_cut_visible;
 
     sun_cut_line =BABYLON.MeshBuilder.CreateLines ( "sun_cut_line", {points: sun_cut_line_data},scene,true); 
-    sun_cut_line.color=new BABYLON.Color3(1,1,0);
+    sun_cut_line.material=suncutMat2;
     sun_cut_line.isVisible=sun_tp_visible*sun_tp_cut_visible;
 
     //Líneas de observación de usuario sobre la TG
     user_line_1 =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: user_data_line_1},scene,true); 
-    user_line_1.color=new BABYLON.Color3(1, 0, 0);
+    user_line_1.material=redMat2;
     user_line_1.isVisible=user_tg_lines_visible;
 
     user_line_2 =BABYLON.MeshBuilder.CreateLines ( "user_line_2", {points: user_data_line_2},scene,true); 
-    user_line_2.color=new BABYLON.Color3(0, 0, 1);
+    user_line_2.material=blueMat2;
     user_line_2.isVisible=user_tg_lines_visible;
 
     //Líneas de observación de usuario sobre la TP
     fe_user_line_1 =BABYLON.MeshBuilder.CreateLines ( "fe_user_line_1", {points: fe_user_data_line_1},scene,true); 
-    fe_user_line_1.color=new BABYLON.Color3(1, 0, 0);
+    fe_user_line_1.material=redMat2;
     fe_user_line_1.isVisible=user_tp_lines_visible;
 
     fe_user_line_2 =BABYLON.MeshBuilder.CreateLines ( "fe_user_line_2", {points: fe_user_data_line_2},scene,true); 
-    fe_user_line_2.color=new BABYLON.Color3(0, 0, 1);
+    fe_user_line_2.material=blueMat2;
     fe_user_line_2.isVisible=user_tp_lines_visible;
 
     //Trayectorias del Sol cenital
     sun_tr_line =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: sun_tr_line_data},scene,true); 
-    sun_tr_line.color=new BABYLON.Color3(1, 1, 0);
+    sun_tr_line.material=suncutMat2;
     sun_tr_line_fe =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: sun_tr_line_data_fe},scene,true); 
-    sun_tr_line_fe.color=new BABYLON.Color3(1, 1, 0);
+    sun_tr_line_fe.material=suncutMat2;
 
     //Trayectorias de la luna cenital
     moon_tr_line =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: moon_tr_line_data},scene,true); 
-    moon_tr_line.color=new BABYLON.Color3(1, 1, 1);
+    moon_tr_line.material=mooncutMat2;
     moon_tr_line_fe =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: moon_tr_line_data_fe},scene,true); 
-    moon_tr_line_fe.color=new BABYLON.Color3(1, 1, 1);
+    moon_tr_line_fe.material=mooncutMat2;
         
     //Rose lines
     rose_line =BABYLON.MeshBuilder.CreateLines ( "rose_line", {points: rose_lines_data, colors: rose_lines_color_data},scene,true); 
+    rose_line.material=auxMat2;
+
+    //Material de las lineas de umbra
+    eclu_mat=new BABYLON.StandardMaterial("eclu_mat", scene);
+    eclu_mat.diffuseColor=line_color_moon;
+    eclu_mat.ambientColor=new BABYLON.Color3(1,0,0);
+    eclu_mat.specularColor=new BABYLON.Color3(0,0,0);
+    eclu_mat.emissiveColor=new BABYLON.Color3(1,0,0);
+    eclu_mat.useLogarithmicDepth=true;
+
+    //Material de las lineas de penumbra
+    eclp_mat=new BABYLON.StandardMaterial("eclp_mat", scene);
+    eclp_mat.diffuseColor=line_color_moon;
+    eclp_mat.ambientColor=new BABYLON.Color3(1,1,0);
+    eclp_mat.specularColor=new BABYLON.Color3(0,0,0);
+    eclp_mat.emissiveColor=new BABYLON.Color3(1,1,0);
+    eclp_mat.useLogarithmicDepth=true;
 
     //Lineas de eclipse    
     eclipse_line_umbra =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_umbra},scene,true); 
-    eclipse_line_umbra.color=new BABYLON.Color3(1,0,0);
+    eclipse_line_umbra.material=eclu_mat;
     eclipse_line_penumbra =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_penumbra},scene,true); 
-    eclipse_line_penumbra.color=new BABYLON.Color3(1,1,0);
+    eclipse_line_penumbra.material=eclu_mat;
 
     eclipse_line_umbra_fe =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_umbra_fe},scene,true); 
-    eclipse_line_umbra_fe.color=new BABYLON.Color3(1,0,0);
+    eclipse_line_umbra_fe.material=eclp_mat;
     eclipse_line_penumbra_fe =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_penumbra_fe},scene,true); 
-    eclipse_line_penumbra_fe.color=new BABYLON.Color3(1,1,0);
+    eclipse_line_penumbra_fe.material=eclp_mat;
     
     sumo_line_sp =BABYLON.MeshBuilder.CreateLines ( "sun-moon line sp", {points: sumopos_sp},scene,true); 
-    sumo_line_sp.color=new BABYLON.Color3(1, 1, 1);
+    sumo_line_sp.material=auxMat2;
     sumo_line_fe =BABYLON.MeshBuilder.CreateLines ( "sun-moon line fe", {points: sumopos_fe},scene,true); 
-    sumo_line_fe.color=new BABYLON.Color3(1, 1, 1);
+    sumo_line_fe.material=auxMat2;
     sumopro_line_sp =BABYLON.MeshBuilder.CreateLines ( "sun-moon line fe", {points: sumopro_sp},scene,true); 
-    sumopro_line_sp.color=new BABYLON.Color3(1, 1, 1);
+    sumopro_line_sp.material=auxMat2;
     sumopro_line_sp.alpha=0.125;
     sumo_line_sp.isVisible=eclipse_test;
     sumo_line_fe.isVisible=eclipse_test;
@@ -3417,12 +3548,17 @@ var createScene = function () {
             result.g = 1*glow_factor;
             result.b = 1*glow_factor;
         
-        } else if (mesh==eclipse_line_umbra || mesh==eclipse_line_penumbra ||
-                   mesh==eclipse_line_umbra_fe || mesh==eclipse_line_penumbra_fe) {
+        } else if (mesh==eclipse_line_umbra || mesh==eclipse_line_umbra_fe) {
+
+            result.r = 1*glow_factor;
+            result.g = 0*glow_factor;
+            result.b = 0*glow_factor;
+            
+        } else if (mesh==eclipse_line_penumbra || mesh==eclipse_line_penumbra_fe) {
 
             result.r = 1*glow_factor;
             result.g = 1*glow_factor;
-            result.b = 1*glow_factor;           
+            result.b = 0*glow_factor;           
 
         } else {
             result.r=0;
@@ -3431,7 +3567,6 @@ var createScene = function () {
         }
     }
 
-    
     //Efecto neón para las líneas de posición o dirección
     var glo2 = new BABYLON.GlowLayer("glow_effect", scene, {
         blurKernelSize: 15
@@ -3559,8 +3694,8 @@ var createScene = function () {
     vpm1_rect.background = "red";
     vpm1_rect.top="0%";
     vpm1_rect.left="0%";
-    vpm1_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    vpm1_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    vpm1_rect.horizontalAlignment = al_left;
+    vpm1_rect.verticalAlignment = al_top;
     vpm1_rect.isVisible=1;
     vpm1_rect.alpha=0.2;	
     advancedTexture1.addControl(vpm1_rect);
@@ -3575,8 +3710,8 @@ var createScene = function () {
     vpm2_rect.background = "blue";
     vpm2_rect.top="0%";
     vpm2_rect.left="0%";
-    vpm2_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    vpm2_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    vpm2_rect.horizontalAlignment = al_left;
+    vpm2_rect.verticalAlignment = al_top;
     vpm2_rect.isVisible=1;
     vpm2_rect.alpha=0.2;		
     advancedTexture2.addControl(vpm2_rect);
@@ -3592,7 +3727,7 @@ var createScene = function () {
     panelI_rect.background = "black";
     panelI_rect.top="0%";
     panelI_rect.left="0%";
-    panelI_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    panelI_rect.horizontalAlignment = al_left;
     panelI_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     panelI_rect.alpha=0.8;
     panelI_rect.isVisible=1;		
@@ -3611,7 +3746,7 @@ var createScene = function () {
     panelI_tab1_btn.left="35px";
     panelI_tab1_btn.horizontalAlignment = al_left;
     panelI_tab1_btn.verticalAlignment  = al_top;
-    panelI_tab1_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    panelI_tab1_btn.textHorizontalAlignment = al_left;		
     panelI_tab1_btn.fontFamily = 'monospace';
     panelI_tab1_btn.onPointerClickObservable.add (function() {
 
@@ -3643,7 +3778,7 @@ var createScene = function () {
     panelI_tab2_btn.left="98px";
     panelI_tab2_btn.horizontalAlignment = al_left;
     panelI_tab2_btn.verticalAlignment  = al_top;
-    panelI_tab2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    panelI_tab2_btn.textHorizontalAlignment = al_left;		
     panelI_tab2_btn.fontFamily = 'monospace';
     panelI_tab2_btn.onPointerClickObservable.add (function() {
 
@@ -3675,7 +3810,7 @@ var createScene = function () {
     panelI_tab4_btn.left="170px";
     panelI_tab4_btn.horizontalAlignment = al_left;
     panelI_tab4_btn.verticalAlignment  = al_top;
-    panelI_tab4_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    panelI_tab4_btn.textHorizontalAlignment = al_left;		
     panelI_tab4_btn.fontFamily = 'monospace';
     panelI_tab4_btn.onPointerClickObservable.add (function() {
 
@@ -3707,7 +3842,7 @@ var createScene = function () {
     panelI_tab5_btn.left="217px";
     panelI_tab5_btn.horizontalAlignment = al_left;
     panelI_tab5_btn.verticalAlignment  = al_top;
-    panelI_tab5_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    panelI_tab5_btn.textHorizontalAlignment = al_left;		
     panelI_tab5_btn.fontFamily = 'monospace';
     panelI_tab5_btn.onPointerClickObservable.add (function() {
 
@@ -3739,7 +3874,7 @@ var createScene = function () {
     panelI_tab3_btn.left="264px";
     panelI_tab3_btn.horizontalAlignment = al_left;
     panelI_tab3_btn.verticalAlignment  = al_top;
-    panelI_tab3_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    panelI_tab3_btn.textHorizontalAlignment = al_left;		
     panelI_tab3_btn.fontFamily = 'monospace';
     panelI_tab3_btn.onPointerClickObservable.add (function() {
 
@@ -3768,7 +3903,7 @@ var createScene = function () {
     data_rect.background = "black";
     data_rect.top="0%";
     data_rect.left="0%";
-    data_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    data_rect.horizontalAlignment = al_left;
     data_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     data_rect.alpha=0.9;
     data_rect.isVisible=0;		
@@ -3784,7 +3919,7 @@ var createScene = function () {
     opts_rect.background = "black";
     opts_rect.top="0%";
     opts_rect.left="0%";
-    opts_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    opts_rect.horizontalAlignment = al_left;
     opts_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     opts_rect.alpha=0.6;
     opts_rect.isVisible=1;		
@@ -3800,7 +3935,7 @@ var createScene = function () {
     moon_rect.background = "black";
     moon_rect.top="0%";
     moon_rect.left="0%";
-    moon_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    moon_rect.horizontalAlignment = al_left;
     moon_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     moon_rect.alpha=0.9;
     moon_rect.isVisible=0;		
@@ -3816,7 +3951,7 @@ var createScene = function () {
     sun_rect.background = "black";
     sun_rect.top="0%";
     sun_rect.left="0%";
-    sun_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    sun_rect.horizontalAlignment = al_left;
     sun_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     sun_rect.alpha=0.9;
     sun_rect.isVisible=0;		
@@ -3832,7 +3967,7 @@ var createScene = function () {
     user_rect.background = "black";
     user_rect.top="0%";
     user_rect.left="0%";
-    user_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    user_rect.horizontalAlignment = al_left;
     user_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     user_rect.alpha=0.9;
     user_rect.isVisible=0;		
@@ -3856,7 +3991,7 @@ var createScene = function () {
     data_text_1.top="0%";
     data_text_1.horizontalAlignment = al_left;
     data_text_1.verticalAlignment  = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    data_text_1.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    data_text_1.textHorizontalAlignment = al_left;		
     data_text_1.fontFamily = 'monospace';
     data_rect.addControl(data_text_1);
 
@@ -3871,7 +4006,7 @@ var createScene = function () {
     data_text_v.left=color_mark_global_left+2;
     data_text_v.horizontalAlignment = al_left;
     data_text_v.verticalAlignment  = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    data_text_v.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    data_text_v.textHorizontalAlignment = al_left;		
     data_text_v.fontFamily = 'monospace';
     data_rect.addControl(data_text_v);
 
@@ -3891,7 +4026,7 @@ var createScene = function () {
     color_mark_o.thickness = 1;
     color_mark_o.horizontalAlignment = al_left;
     color_mark_o.verticalAlignment = al_top;
-    color_mark_o.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    color_mark_o.textHorizontalAlignment=al_left;		
     color_mark_o.fontFamily = 'monospace';
     color_mark_o.onPointerClickObservable.add (function() {
 
@@ -3930,7 +4065,7 @@ var createScene = function () {
     color_mark_l.thickness = 1;
     color_mark_l.horizontalAlignment = al_left;
     color_mark_l.verticalAlignment = al_top;
-    color_mark_l.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    color_mark_l.textHorizontalAlignment=al_left;		
     color_mark_l.fontFamily = 'monospace';
     color_mark_l.onPointerClickObservable.add (function() {
 
@@ -3969,7 +4104,7 @@ var createScene = function () {
     color_mark_f.thickness = 1;
     color_mark_f.horizontalAlignment = al_left;
     color_mark_f.verticalAlignment = al_top;
-    color_mark_f.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    color_mark_f.textHorizontalAlignment=al_left;		
     color_mark_f.fontFamily = 'monospace';
     color_mark_f.onPointerClickObservable.add (function() {
 
@@ -4008,7 +4143,7 @@ var createScene = function () {
     color_mark_e.thickness = 1;
     color_mark_e.horizontalAlignment = al_left;
     color_mark_e.verticalAlignment = al_top;
-    color_mark_e.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    color_mark_e.textHorizontalAlignment=al_left;		
     color_mark_e.fontFamily = 'monospace';
     color_mark_e.onPointerClickObservable.add (function() {
 
@@ -4044,7 +4179,7 @@ var createScene = function () {
     kod_mark.thickness = 1;
     kod_mark.horizontalAlignment = al_left;
     kod_mark.verticalAlignment = al_top;
-    kod_mark.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    kod_mark.textHorizontalAlignment=al_left;		
     kod_mark.fontFamily = 'monospace';
     kod_mark.onPointerClickObservable.add (function() {
 
@@ -4076,7 +4211,7 @@ var createScene = function () {
     data_text_sp.left=sp_mark_global_left+4;
     data_text_sp.horizontalAlignment = al_left;
     data_text_sp.verticalAlignment  = al_top;
-    data_text_sp.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    data_text_sp.textHorizontalAlignment = al_left;		
     data_text_sp.fontFamily = 'monospace';
     data_rect.addControl(data_text_sp);
 
@@ -4093,7 +4228,7 @@ var createScene = function () {
     sp_mark.thickness = 1;
     sp_mark.horizontalAlignment = al_left;
     sp_mark.verticalAlignment = al_top;
-    sp_mark.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    sp_mark.textHorizontalAlignment=al_left;		
     sp_mark.fontFamily = 'monospace';
     sp_mark.onPointerClickObservable.add (function() {
 
@@ -4135,7 +4270,7 @@ var createScene = function () {
     data_text_fe.left=fe_mark_global_left-1;
     data_text_fe.horizontalAlignment = al_left;
     data_text_fe.verticalAlignment  = al_top;
-    data_text_fe.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    data_text_fe.textHorizontalAlignment = al_left;		
     data_text_fe.fontFamily = 'monospace';
     data_rect.addControl(data_text_fe);
 
@@ -4152,7 +4287,7 @@ var createScene = function () {
     fe_mark.thickness = 1;
     fe_mark.horizontalAlignment = al_left;
     fe_mark.verticalAlignment = al_top;
-    fe_mark.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    fe_mark.textHorizontalAlignment=al_left;		
     fe_mark.fontFamily = 'monospace';
     fe_mark.onPointerClickObservable.add (function() {
 
@@ -4191,7 +4326,7 @@ var createScene = function () {
     info_rect.background = "black";
     info_rect.top="-150px";
     info_rect.left="0px";
-    info_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    info_rect.horizontalAlignment = al_left;
     info_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     info_rect.alpha=0.6;
     info_rect.isVisible=0;		
@@ -4205,7 +4340,7 @@ var createScene = function () {
     info_text_1.top="0%";
     info_text_1.horizontalAlignment = al_left;
     info_text_1.verticalAlignment  = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    info_text_1.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    info_text_1.textHorizontalAlignment = al_left;		
     info_text_1.fontFamily = 'monospace';
     info_rect.addControl(info_text_1);
 
@@ -4221,7 +4356,7 @@ var createScene = function () {
     red_mark.thickness = 1;
     red_mark.horizontalAlignment = al_left;
     red_mark.verticalAlignment = al_top;
-    red_mark.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    red_mark.textHorizontalAlignment=al_left;		
     red_mark.alpha=0.5;
     info_rect.addControl(red_mark);
 
@@ -4237,7 +4372,7 @@ var createScene = function () {
     blue_mark.thickness = 1;
     blue_mark.horizontalAlignment = al_left;
     blue_mark.verticalAlignment = al_top;
-    blue_mark.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    blue_mark.textHorizontalAlignment=al_left;		
     blue_mark.alpha=0.5;
     info_rect.addControl(blue_mark);
 
@@ -4252,7 +4387,7 @@ var createScene = function () {
     data_text_i.left=info_mark_global_left+2;
     data_text_i.horizontalAlignment = al_left;
     data_text_i.verticalAlignment  = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    data_text_i.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    data_text_i.textHorizontalAlignment = al_left;		
     data_text_i.fontFamily = 'monospace';
     data_rect.addControl(data_text_i);
 
@@ -4269,7 +4404,7 @@ var createScene = function () {
     info_mark_o.thickness = 1;
     info_mark_o.horizontalAlignment = al_left;
     info_mark_o.verticalAlignment = al_top;
-    info_mark_o.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    info_mark_o.textHorizontalAlignment=al_left;		
     info_mark_o.fontFamily = 'monospace';
     info_mark_o.onPointerClickObservable.add (function() {
 
@@ -4314,7 +4449,7 @@ var createScene = function () {
     info_mark_l.thickness = 1;
     info_mark_l.horizontalAlignment = al_left;
     info_mark_l.verticalAlignment = al_top;
-    info_mark_l.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    info_mark_l.textHorizontalAlignment=al_left;		
     info_mark_l.fontFamily = 'monospace';
     info_mark_l.onPointerClickObservable.add (function() {
 
@@ -4359,7 +4494,7 @@ var createScene = function () {
     info_mark_f.thickness = 1;
     info_mark_f.horizontalAlignment = al_left;
     info_mark_f.verticalAlignment = al_top;
-    info_mark_f.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    info_mark_f.textHorizontalAlignment=al_left;		
     info_mark_f.fontFamily = 'monospace';
     info_mark_f.onPointerClickObservable.add (function() {
 
@@ -4404,7 +4539,7 @@ var createScene = function () {
     info_mark_e.thickness = 1;
     info_mark_e.horizontalAlignment = al_left;
     info_mark_e.verticalAlignment = al_top;
-    info_mark_e.textHorizontalAlignment=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    info_mark_e.textHorizontalAlignment=al_left;		
     info_mark_e.fontFamily = 'monospace';
     info_mark_e.onPointerClickObservable.add (function() {
 
@@ -4466,7 +4601,7 @@ var createScene = function () {
     map_p_btn.left="370px";
     map_p_btn.horizontalAlignment = al_left;
     map_p_btn.verticalAlignment  = al_top;
-    map_p_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    map_p_btn.textHorizontalAlignment = al_left;		
     map_p_btn.fontFamily = 'monospace';
     map_p_btn.onPointerClickObservable.add(function() {
 
@@ -4510,7 +4645,7 @@ var createScene = function () {
     map_m_btn.left="300px";
     map_m_btn.horizontalAlignment = al_left;
     map_m_btn.verticalAlignment  = al_top;
-    map_m_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    map_m_btn.textHorizontalAlignment = al_left;		
     map_m_btn.fontFamily = 'monospace';
     map_m_btn.onPointerClickObservable.add(function() {
 
@@ -4548,15 +4683,15 @@ var createScene = function () {
     var opt_text = new BABYLON.GUI.TextBlock();
     opt_text.text="\n"+
                   " LINES GLOW                    FE SIZE\n"+
-                  " MOUSE SENS.\n\n";
+                  " MOUSE SENS.                   FE ANGLE\n\n";
     opt_text.color = "white";
     opt_text.fontSize = 12;
     opt_text.top=sl_top_pos;
     opt_text.height="130px"
     opt_text.left=0;
     opt_text.horizontalAlignment = al_left;
-    opt_text.verticalAlignment  = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    opt_text.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    opt_text.verticalAlignment  = al_top;
+    opt_text.textHorizontalAlignment = al_left;		
     opt_text.textVerticalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_TOP;		
     opt_text.fontFamily = 'monospace';
     opts_rect.addControl(opt_text);
@@ -4590,7 +4725,7 @@ var createScene = function () {
     fe_scale_slider.height = "11px";
     fe_scale_slider.width = "90px";
     fe_scale_slider.top=sl_top_pos+4;
-    fe_scale_slider.left="280px";
+    fe_scale_slider.left="290px";
     fe_scale_slider.background = "gray";
     fe_scale_slider.color="gray";
     fe_scale_slider.horizontalAlignment = al_left;
@@ -4602,7 +4737,8 @@ var createScene = function () {
 
         EarthDisk.scaling=new BABYLON.Vector3(sfe/sfe0,sfe/sfe0,sfe/sfe0);
 
-        fe_pos=new BABYLON.Vector3(0,-fe_h,-4*rfe);
+        //fe_pos=new BABYLON.Vector3(0,-fe_h,-4*rfe);
+        fe_pos=new BABYLON.Vector3(4*rfe*Math.sin(fe_angle),-fe_h,-4*rfe*Math.cos(fe_angle));
         EarthDisk.position= fe_pos.subtract(zero);
 
         if (fe_sel==1) {
@@ -4620,6 +4756,46 @@ var createScene = function () {
         
     });
     opts_rect.addControl(fe_scale_slider);
+
+
+    //Control del intensidad del efecto neón
+    fe_angle_slider = new BABYLON.GUI.Slider();
+    fe_angle_slider.minimum = 0;
+    fe_angle_slider.maximum = 2*Math.PI;
+    fe_angle_slider.value = 0.0
+    fe_angle_slider.step=2*Math.PI/360.0;
+    fe_angle_slider.height = "11px";
+    fe_angle_slider.width = "90px";
+    fe_angle_slider.top=sl_top_pos+23;
+    fe_angle_slider.left="290px";
+    fe_angle_slider.background = "gray";
+    fe_angle_slider.color="gray";
+    fe_angle_slider.horizontalAlignment = al_left;
+    fe_angle_slider.verticalAlignment = al_top;			
+    fe_angle_slider.onValueChangedObservable.add(function(value) {
+
+        fe_angle=fe_angle_slider.value*1.0;
+
+        //fe_pos=new BABYLON.Vector3(0,-fe_h,-4*rfe);
+        fe_pos=new BABYLON.Vector3(4*rfe*Math.sin(fe_angle),-fe_h,-4*rfe*Math.cos(fe_angle));
+        EarthDisk.position= fe_pos.subtract(zero);
+
+        if (fe_sel==1) {
+            camera.target=fe_pos;
+        }
+
+        pos3=rlatlon_to_xyz_fe(rfe,lat1,lon1,h1);
+        redSphere_fe.position=pos3.subtract(zero);
+
+        pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2,h2);
+        blueSphere_fe.position=pos4.subtract(zero);
+
+        update_all();
+        
+    });
+    opts_rect.addControl(fe_angle_slider);
+
+
 
     //Control de la sensibilidad del ratón
     //al mover las posiciones
@@ -4654,7 +4830,7 @@ var createScene = function () {
     vpt_btn.left="8px";
     vpt_btn.horizontalAlignment = al_left;
     vpt_btn.verticalAlignment  = al_top;
-    vpt_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    vpt_btn.textHorizontalAlignment = al_left;		
     vpt_btn.fontFamily = 'monospace';
     vpt_btn.onPointerClickObservable.add(function() {
 
@@ -4693,7 +4869,7 @@ var createScene = function () {
     hc_btn.left="122px";
     hc_btn.horizontalAlignment = al_left;
     hc_btn.verticalAlignment  = al_top;
-    hc_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    hc_btn.textHorizontalAlignment = al_left;		
     hc_btn.fontFamily = 'monospace';
     hc_btn.onPointerClickObservable.add(function() {
 
@@ -4726,7 +4902,7 @@ var createScene = function () {
     pinfo2_btn.left="8px";
     pinfo2_btn.horizontalAlignment = al_left;
     pinfo2_btn.verticalAlignment  = al_top;
-    pinfo2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    pinfo2_btn.textHorizontalAlignment = al_left;		
     pinfo2_btn.fontFamily = 'monospace';
     pinfo2_btn.onPointerClickObservable.add(function() {
 
@@ -4755,8 +4931,8 @@ var createScene = function () {
     date_rect.background = "black";
     date_rect.top="2px";
     date_rect.left="2";
-    date_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    date_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    date_rect.horizontalAlignment = al_left;
+    date_rect.verticalAlignment = al_top;
     date_rect.alpha=0.6;
     date_rect.isVisible=1;		
     advancedTexture.addControl(date_rect);
@@ -4771,8 +4947,8 @@ var createScene = function () {
     open_date_rect.background = "black";
     open_date_rect.top="2px";
     open_date_rect.left="2";
-    open_date_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    open_date_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    open_date_rect.horizontalAlignment = al_left;
+    open_date_rect.verticalAlignment = al_top;
     open_date_rect.alpha=1;
     open_date_rect.isVisible=0;		
     advancedTexture.addControl(open_date_rect);
@@ -4875,7 +5051,7 @@ var createScene = function () {
     now_btn.left="50px";
     now_btn.horizontalAlignment = al_left;
     now_btn.verticalAlignment  = al_top;
-    now_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    now_btn.textHorizontalAlignment = al_left;		
     now_btn.fontFamily = 'monospace';
     now_btn.onPointerClickObservable.add(function() {
 
@@ -4906,7 +5082,7 @@ var createScene = function () {
     time_step_btn.left="260px";
     time_step_btn.horizontalAlignment = al_left;
     time_step_btn.verticalAlignment  = al_top;
-    time_step_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    time_step_btn.textHorizontalAlignment = al_left;		
     time_step_btn.fontFamily = 'monospace';
     time_step_btn.onWheelObservable.add(function(evt) {
 
@@ -4944,7 +5120,7 @@ var createScene = function () {
     step_day_btn.left="155px";
     step_day_btn.horizontalAlignment = al_left;
     step_day_btn.verticalAlignment  = al_top;
-    step_day_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    step_day_btn.textHorizontalAlignment = al_left;		
     step_day_btn.fontFamily = 'monospace';
     step_day_btn.onWheelObservable.add(function(evt) {
 
@@ -4968,7 +5144,7 @@ var createScene = function () {
     step_hour_btn.left="183px";
     step_hour_btn.horizontalAlignment = al_left;
     step_hour_btn.verticalAlignment  = al_top;
-    step_hour_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    step_hour_btn.textHorizontalAlignment = al_left;		
     step_hour_btn.fontFamily = 'monospace';
     step_hour_btn.onWheelObservable.add(function(evt) {
 
@@ -4992,7 +5168,7 @@ var createScene = function () {
     step_min_btn.left="210px";
     step_min_btn.horizontalAlignment = al_left;
     step_min_btn.verticalAlignment  = al_top;
-    step_min_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    step_min_btn.textHorizontalAlignment = al_left;		
     step_min_btn.fontFamily = 'monospace';
     step_min_btn.onWheelObservable.add(function(evt) {
 
@@ -5016,7 +5192,7 @@ var createScene = function () {
     step_seg_btn.left="237px";
     step_seg_btn.horizontalAlignment = al_left;
     step_seg_btn.verticalAlignment  = al_top;
-    step_seg_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    step_seg_btn.textHorizontalAlignment = al_left;		
     step_seg_btn.fontFamily = 'monospace';
     step_seg_btn.onWheelObservable.add(function(evt) {
 
@@ -5040,7 +5216,7 @@ var createScene = function () {
     step_int_btn.left="110px";
     step_int_btn.horizontalAlignment = al_left;
     step_int_btn.verticalAlignment  = al_top;
-    step_int_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    step_int_btn.textHorizontalAlignment = al_left;		
     step_int_btn.fontFamily = 'monospace';
     step_int_btn.onWheelObservable.add(function(evt) {
 
@@ -5074,7 +5250,7 @@ var createScene = function () {
     animaf_btn.left="133px";
     animaf_btn.horizontalAlignment = al_left;
     animaf_btn.verticalAlignment  = al_top;
-    animaf_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    animaf_btn.textHorizontalAlignment = al_left;		
     animaf_btn.fontFamily = 'monospace';
     animaf_btn.onPointerClickObservable.add(function(evt) {
 
@@ -5103,7 +5279,7 @@ var createScene = function () {
     animar_btn.left="93px";
     animar_btn.horizontalAlignment = al_left;
     animar_btn.verticalAlignment  = al_top;
-    animar_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    animar_btn.textHorizontalAlignment = al_left;		
     animar_btn.fontFamily = 'monospace';
     animar_btn.onPointerClickObservable.add(function(evt) {
 
@@ -5132,7 +5308,7 @@ var createScene = function () {
     day_btn.left="51px";
     day_btn.horizontalAlignment = al_left;
     day_btn.verticalAlignment  = al_top;
-    day_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    day_btn.textHorizontalAlignment = al_left;		
     day_btn.fontFamily = 'monospace';
     day_btn.onWheelObservable.add(function(evt) {
 
@@ -5168,7 +5344,7 @@ var createScene = function () {
     month_btn.thickness=0;
     month_btn.horizontalAlignment = al_left;
     month_btn.verticalAlignment  = al_top;
-    month_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    month_btn.textHorizontalAlignment = al_left;		
     month_btn.fontFamily = 'monospace';
     month_btn.onWheelObservable.add(function(evt) {
 
@@ -5213,7 +5389,7 @@ var createScene = function () {
     year_btn.left="125px";
     year_btn.horizontalAlignment = al_left;
     year_btn.verticalAlignment  = al_top;
-    year_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    year_btn.textHorizontalAlignment = al_left;		
     year_btn.fontFamily = 'monospace';
     year_btn.onWheelObservable.add(function(evt) {
 
@@ -5255,7 +5431,7 @@ var createScene = function () {
     hour_btn.left="194px";
     hour_btn.horizontalAlignment = al_left;
     hour_btn.verticalAlignment  = al_top;
-    hour_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    hour_btn.textHorizontalAlignment = al_left;		
     hour_btn.fontFamily = 'monospace';
     hour_btn.onWheelObservable.add(function(evt) {
 
@@ -5290,7 +5466,7 @@ var createScene = function () {
     minu_btn.left="230px";
     minu_btn.horizontalAlignment = al_left;
     minu_btn.verticalAlignment  = al_top;
-    minu_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    minu_btn.textHorizontalAlignment = al_left;		
     minu_btn.fontFamily = 'monospace';
     minu_btn.onWheelObservable.add(function(evt) {
 
@@ -5324,7 +5500,7 @@ var createScene = function () {
     segu_btn.left="260px";
     segu_btn.horizontalAlignment = al_left;
     segu_btn.verticalAlignment  = al_top;
-    segu_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    segu_btn.textHorizontalAlignment = al_left;		
     segu_btn.fontFamily = 'monospace';
     segu_btn.onWheelObservable.add(function(evt) {
 
@@ -5347,8 +5523,6 @@ var createScene = function () {
 	});	
     date_rect.addControl(segu_btn);
     //------Contenido del tab de opciones---------
-
-
 
     //--------------------------------------------
 
@@ -5389,7 +5563,7 @@ var createScene = function () {
     lat1_pe_btn.left=loc_left;
     lat1_pe_btn.horizontalAlignment = al_left;
     lat1_pe_btn.verticalAlignment  = al_top;
-    lat1_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    lat1_pe_btn.textHorizontalAlignment = al_left;		
     lat1_pe_btn.fontFamily = 'monospace';
     lat1_pe_btn.onWheelObservable.add(function(evt) {
 
@@ -5476,7 +5650,7 @@ var createScene = function () {
     lat1_pd_btn.left=loc_left+40;
     lat1_pd_btn.horizontalAlignment = al_left;
     lat1_pd_btn.verticalAlignment  = al_top;
-    lat1_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    lat1_pd_btn.textHorizontalAlignment = al_left;		
     lat1_pd_btn.fontFamily = 'monospace';
     lat1_pd_btn.onPointerClickObservable.add( function() { open_map_for_red(); });
     lat1_pd_btn.onWheelObservable.add(function(evt) {
@@ -5525,7 +5699,7 @@ var createScene = function () {
     lon1_pe_btn.left=loc_left+80;
     lon1_pe_btn.horizontalAlignment = al_left;
     lon1_pe_btn.verticalAlignment  = al_top;
-    lon1_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    lon1_pe_btn.textHorizontalAlignment = al_left;		
     lon1_pe_btn.fontFamily = 'monospace';
     lon1_pe_btn.onPointerClickObservable.add( function() { open_map_for_red(); });
     lon1_pe_btn.onWheelObservable.add(function(evt) {
@@ -5566,7 +5740,7 @@ var createScene = function () {
     lon1_pd_btn.left=loc_left+130;
     lon1_pd_btn.horizontalAlignment = al_left;
     lon1_pd_btn.verticalAlignment  = al_top;
-    lon1_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    lon1_pd_btn.textHorizontalAlignment = al_left;		
     lon1_pd_btn.fontFamily = 'monospace';
     lon1_pd_btn.onPointerClickObservable.add( function() { open_map_for_red(); });
     lon1_pd_btn.onWheelObservable.add(function(evt) {
@@ -5611,12 +5785,11 @@ var createScene = function () {
     bear1_btn.left=loc_left+170+80;
     bear1_btn.horizontalAlignment = al_left;
     bear1_btn.verticalAlignment  = al_top;
-    bear1_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    bear1_btn.textHorizontalAlignment = al_left;		
     bear1_btn.fontFamily = 'monospace';
     //Muestra el mapa de selección de la ubicación roja
     //bear1_btn.onPointerClickObservable.add( function() { open_map_for_red(); });
     loca_rect.addControl(bear1_btn);
-
 
 	 //Altura de la esfera roja (kilómetros)
     var height1k_btn=BABYLON.GUI.Button.CreateSimpleButton("h1k","");
@@ -5631,7 +5804,7 @@ var createScene = function () {
     height1k_btn.left=loc_left+170;
     height1k_btn.horizontalAlignment = al_left;
     height1k_btn.verticalAlignment  = al_top;
-    height1k_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    height1k_btn.textHorizontalAlignment = al_left;		
     height1k_btn.fontFamily = 'monospace';
     height1k_btn.onWheelObservable.add(function(evt) {
 
@@ -5659,9 +5832,8 @@ var createScene = function () {
 		redSphere_fe.position=pos3;
         update_all();
  
-	 });	
+	});	
     loca_rect.addControl(height1k_btn);
-
 
 	 //Altura de la esfera roja (metros)
     var height1m_btn=BABYLON.GUI.Button.CreateSimpleButton("h1m","");
@@ -5676,7 +5848,7 @@ var createScene = function () {
     height1m_btn.left=loc_left+170+35;
     height1m_btn.horizontalAlignment = al_left;
     height1m_btn.verticalAlignment  = al_top;
-    height1m_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    height1m_btn.textHorizontalAlignment = al_left;		
     height1m_btn.fontFamily = 'monospace';
     height1m_btn.onWheelObservable.add(function(evt) {
 
@@ -5704,7 +5876,7 @@ var createScene = function () {
 		redSphere_fe.position=pos3;
         update_all();
  
-	 });	
+	});	
     loca_rect.addControl(height1m_btn);
 
     //---------------------------------------------------------
@@ -5730,7 +5902,7 @@ var createScene = function () {
     lat2_pe_btn.left=loc_left;
     lat2_pe_btn.horizontalAlignment = al_left;
     lat2_pe_btn.verticalAlignment  = al_top;
-    lat2_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    lat2_pe_btn.textHorizontalAlignment = al_left;		
     lat2_pe_btn.fontFamily = 'monospace';
     lat2_pe_btn.onWheelObservable.add(function(evt) {
 
@@ -5816,7 +5988,7 @@ var createScene = function () {
     lat2_pd_btn.left=loc_left+40;
     lat2_pd_btn.horizontalAlignment = al_left;
     lat2_pd_btn.verticalAlignment  = al_top;
-    lat2_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    lat2_pd_btn.textHorizontalAlignment = al_left;		
     lat2_pd_btn.fontFamily = 'monospace';
     lat2_pd_btn.onPointerClickObservable.add( function() {open_map_for_blue()});
     lat2_pd_btn.onWheelObservable.add(function(evt) {
@@ -5865,7 +6037,7 @@ var createScene = function () {
     lon2_pe_btn.left=loc_left+80;
     lon2_pe_btn.horizontalAlignment = al_left;
     lon2_pe_btn.verticalAlignment  = al_top;
-    lon2_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    lon2_pe_btn.textHorizontalAlignment = al_left;		
     lon2_pe_btn.fontFamily = 'monospace';
     lon2_pe_btn.onPointerClickObservable.add( function() {open_map_for_blue()});
     lon2_pe_btn.onWheelObservable.add(function(evt) {
@@ -5906,7 +6078,7 @@ var createScene = function () {
     lon2_pd_btn.left=loc_left+130;
     lon2_pd_btn.horizontalAlignment = al_left;
     lon2_pd_btn.verticalAlignment  = al_top;
-    lon2_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    lon2_pd_btn.textHorizontalAlignment = al_left;		
     lon2_pd_btn.fontFamily = 'monospace';
     lon2_pd_btn.onPointerClickObservable.add( function() {open_map_for_blue()});
     lon2_pd_btn.onWheelObservable.add(function(evt) {
@@ -5951,7 +6123,7 @@ var createScene = function () {
     bear2_btn.left=loc_left+170+80;
     bear2_btn.horizontalAlignment = al_left;
     bear2_btn.verticalAlignment  = al_top;
-    bear2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    bear2_btn.textHorizontalAlignment = al_left;		
     bear2_btn.fontFamily = 'monospace';
     //Muestra el mapa de selección de la ubicación azul
     //bear2_btn.onPointerClickObservable.add( function() {open_map_for_blue()});
@@ -5970,7 +6142,7 @@ var createScene = function () {
     height2k_btn.left=loc_left+170;
     height2k_btn.horizontalAlignment = al_left;
     height2k_btn.verticalAlignment  = al_top;
-    height2k_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    height2k_btn.textHorizontalAlignment = al_left;		
     height2k_btn.fontFamily = 'monospace';
     height2k_btn.onWheelObservable.add(function(evt) {
 
@@ -5998,9 +6170,8 @@ var createScene = function () {
 		blueSphere_fe.position=pos4;
         update_all();
  
-	 });	
+	});	
     loca_rect.addControl(height2k_btn);
-
 
 	 //Altura de la esfera roja (metros)
     var height2m_btn=BABYLON.GUI.Button.CreateSimpleButton("h2m","");
@@ -6015,7 +6186,7 @@ var createScene = function () {
     height2m_btn.left=loc_left+170+35;
     height2m_btn.horizontalAlignment = al_left;
     height2m_btn.verticalAlignment  = al_top;
-    height2m_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    height2m_btn.textHorizontalAlignment = al_left;		
     height2m_btn.fontFamily = 'monospace';
     height2m_btn.onWheelObservable.add(function(evt) {
 
@@ -6043,7 +6214,7 @@ var createScene = function () {
 		blueSphere_fe.position=pos4;
         update_all();
  
-	 });	
+	});	
     loca_rect.addControl(height2m_btn);
 
     //---------------------------------------------------------
@@ -6068,7 +6239,7 @@ var createScene = function () {
     usr_alt1_pe_btn.left=red_user_left;
     usr_alt1_pe_btn.horizontalAlignment = al_left;
     usr_alt1_pe_btn.verticalAlignment  = al_top;
-    usr_alt1_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_alt1_pe_btn.textHorizontalAlignment = al_left;		
     usr_alt1_pe_btn.fontFamily = 'monospace';
     usr_alt1_pe_btn.onWheelObservable.add(function(evt) {
 
@@ -6103,7 +6274,7 @@ var createScene = function () {
     usr_alt1_pd_btn.left=red_user_left+30;
     usr_alt1_pd_btn.horizontalAlignment = al_left;
     usr_alt1_pd_btn.verticalAlignment  = al_top;
-    usr_alt1_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_alt1_pd_btn.textHorizontalAlignment = al_left;		
     usr_alt1_pd_btn.fontFamily = 'monospace';
     usr_alt1_pd_btn.onWheelObservable.add(function(evt) {
 
@@ -6127,7 +6298,6 @@ var createScene = function () {
 	});	
     user_rect.addControl(usr_alt1_pd_btn);
 
-
     //Altura de observación por usuario (parte decimal)
     var usr_alt1_pd2_btn=BABYLON.GUI.Button.CreateSimpleButton("user alt1 dec","");
     usr_alt1_pd2_btn.textBlock.text=(Math.floor(100*(user_alt_1_co-Math.floor(user_alt_1_co)))).toString().padStart(2,"0")+"º";
@@ -6141,7 +6311,7 @@ var createScene = function () {
     usr_alt1_pd2_btn.left=red_user_left+50;
     usr_alt1_pd2_btn.horizontalAlignment = al_left;
     usr_alt1_pd2_btn.verticalAlignment  = al_top;
-    usr_alt1_pd2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_alt1_pd2_btn.textHorizontalAlignment = al_left;		
     usr_alt1_pd2_btn.fontFamily = 'monospace';
     usr_alt1_pd2_btn.onWheelObservable.add(function(evt) {
 
@@ -6165,7 +6335,6 @@ var createScene = function () {
 	});	
     user_rect.addControl(usr_alt1_pd2_btn);
 
-
     //Azimut observación por usuario (parte entera)
     var usr_az1_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("user az1 int","");
     usr_az1_pe_btn.textBlock.text=Math.floor(user_az_1).toString().padStart(3,"0")+".";
@@ -6179,7 +6348,7 @@ var createScene = function () {
     usr_az1_pe_btn.left=red_user_left+90;
     usr_az1_pe_btn.horizontalAlignment = al_left;
     usr_az1_pe_btn.verticalAlignment  = al_top;
-    usr_az1_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_az1_pe_btn.textHorizontalAlignment = al_left;		
     usr_az1_pe_btn.fontFamily = 'monospace';
     usr_az1_pe_btn.onWheelObservable.add(function(evt) {
 
@@ -6212,7 +6381,7 @@ var createScene = function () {
     usr_az1_pd_btn.left=red_user_left+35+90;
     usr_az1_pd_btn.horizontalAlignment = al_left;
     usr_az1_pd_btn.verticalAlignment  = al_top;
-    usr_az1_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_az1_pd_btn.textHorizontalAlignment = al_left;		
     usr_az1_pd_btn.fontFamily = 'monospace';
     usr_az1_pd_btn.onWheelObservable.add(function(evt) {
 
@@ -6234,7 +6403,6 @@ var createScene = function () {
 	});	
     user_rect.addControl(usr_az1_pd_btn);
 
-
     //Azimut de observación por usuario (parte decimal)
     var usr_az1_pd2_btn=BABYLON.GUI.Button.CreateSimpleButton("user az1 dec","");
     usr_az1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_1-Math.floor(100*user_az_1)))).toString().padStart(2,"0")+"º";
@@ -6248,7 +6416,7 @@ var createScene = function () {
     usr_az1_pd2_btn.left=red_user_left+35+110;
     usr_az1_pd2_btn.horizontalAlignment = al_left;
     usr_az1_pd2_btn.verticalAlignment  = al_top;
-    usr_az1_pd2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_az1_pd2_btn.textHorizontalAlignment = al_left;		
     usr_az1_pd2_btn.fontFamily = 'monospace';
     usr_az1_pd2_btn.onWheelObservable.add(function(evt) {
 
@@ -6289,7 +6457,7 @@ var createScene = function () {
     usr_alt2_pe_btn.left=blue_user_left;
     usr_alt2_pe_btn.horizontalAlignment = al_left;
     usr_alt2_pe_btn.verticalAlignment  = al_top;
-    usr_alt2_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_alt2_pe_btn.textHorizontalAlignment = al_left;		
     usr_alt2_pe_btn.fontFamily = 'monospace';
     usr_alt2_pe_btn.onWheelObservable.add(function(evt) {
 
@@ -6326,7 +6494,7 @@ var createScene = function () {
     usr_alt2_pd_btn.left=blue_user_left+30;
     usr_alt2_pd_btn.horizontalAlignment = al_left;
     usr_alt2_pd_btn.verticalAlignment  = al_top;
-    usr_alt2_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_alt2_pd_btn.textHorizontalAlignment = al_left;		
     usr_alt2_pd_btn.fontFamily = 'monospace';
     usr_alt2_pd_btn.onWheelObservable.add(function(evt) {
 
@@ -6350,7 +6518,6 @@ var createScene = function () {
 	});	
     user_rect.addControl(usr_alt2_pd_btn);
 
-
     //Altura de observación por usuario (parte decimal)
     var usr_alt2_pd2_btn=BABYLON.GUI.Button.CreateSimpleButton("user alt2 dec","");
     usr_alt2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_2_co-Math.floor(100*user_alt_2_co)))).toString().padStart(2,"0")+"º";
@@ -6364,7 +6531,7 @@ var createScene = function () {
     usr_alt2_pd2_btn.left=blue_user_left+30+20;
     usr_alt2_pd2_btn.horizontalAlignment = al_left;
     usr_alt2_pd2_btn.verticalAlignment  = al_top;
-    usr_alt2_pd2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_alt2_pd2_btn.textHorizontalAlignment = al_left;		
     usr_alt2_pd2_btn.fontFamily = 'monospace';
     usr_alt2_pd2_btn.onWheelObservable.add(function(evt) {
 
@@ -6388,7 +6555,6 @@ var createScene = function () {
 	});	
     user_rect.addControl(usr_alt2_pd2_btn);
 
-
     //Azimut observación por usuario (parte entera)
     var usr_az2_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("user az2 int","");
     usr_az2_pe_btn.textBlock.text=Math.floor(user_az_2).toString().padStart(3,"0")+".";
@@ -6402,7 +6568,7 @@ var createScene = function () {
     usr_az2_pe_btn.left=blue_user_left+90;
     usr_az2_pe_btn.horizontalAlignment = al_left;
     usr_az2_pe_btn.verticalAlignment  = al_top;
-    usr_az2_pe_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_az2_pe_btn.textHorizontalAlignment = al_left;		
     usr_az2_pe_btn.fontFamily = 'monospace';
     usr_az2_pe_btn.onWheelObservable.add(function(evt) {
 
@@ -6437,7 +6603,7 @@ var createScene = function () {
     usr_az2_pd_btn.left=blue_user_left+35+90;
     usr_az2_pd_btn.horizontalAlignment = al_left;
     usr_az2_pd_btn.verticalAlignment  = al_top;
-    usr_az2_pd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_az2_pd_btn.textHorizontalAlignment = al_left;		
     usr_az2_pd_btn.fontFamily = 'monospace';
     usr_az2_pd_btn.onWheelObservable.add(function(evt) {
 
@@ -6472,7 +6638,7 @@ var createScene = function () {
     usr_az2_pd2_btn.left=blue_user_left+35+110;
     usr_az2_pd2_btn.horizontalAlignment = al_left;
     usr_az2_pd2_btn.verticalAlignment  = al_top;
-    usr_az2_pd2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    usr_az2_pd2_btn.textHorizontalAlignment = al_left;		
     usr_az2_pd2_btn.fontFamily = 'monospace';
     usr_az2_pd2_btn.onWheelObservable.add(function(evt) {
 
@@ -6507,7 +6673,7 @@ var createScene = function () {
     cmd_btn.left=300;
     cmd_btn.horizontalAlignment = al_left;
     cmd_btn.verticalAlignment  = al_top;
-    cmd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    cmd_btn.textHorizontalAlignment = al_left;		
     cmd_btn.fontFamily = 'monospace';
     cmd_btn.onPointerClickObservable.add(function(evt) {
 
@@ -6550,7 +6716,7 @@ var createScene = function () {
     csd_btn.left=300;
     csd_btn.horizontalAlignment = al_left;
     csd_btn.verticalAlignment  = al_top;
-    csd_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    csd_btn.textHorizontalAlignment = al_left;		
     csd_btn.fontFamily = 'monospace';
     csd_btn.onPointerClickObservable.add(function(evt) {
 
@@ -6670,7 +6836,7 @@ var createScene = function () {
     user_line_tg_btn.left="140px";
     user_line_tg_btn.horizontalAlignment = al_left;
     user_line_tg_btn.verticalAlignment  = al_top;
-    user_line_tg_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    user_line_tg_btn.textHorizontalAlignment = al_left;		
     user_line_tg_btn.fontFamily = 'monospace';
     if (user_tg_lines_visible==1) {
         user_line_tg_btn.background="green";
@@ -6705,7 +6871,7 @@ var createScene = function () {
     user_line_tp_btn.left="220px";
     user_line_tp_btn.horizontalAlignment = al_left;
     user_line_tp_btn.verticalAlignment  = al_top;
-    user_line_tp_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    user_line_tp_btn.textHorizontalAlignment = al_left;		
     user_line_tp_btn.fontFamily = 'monospace';
     if (user_tp_lines_visible==1) {
         user_line_tp_btn.background="green";
@@ -6760,7 +6926,7 @@ var createScene = function () {
     moon_line_tg_btn.left="20px";
     moon_line_tg_btn.horizontalAlignment = al_left;
     moon_line_tg_btn.verticalAlignment  = al_top;
-    moon_line_tg_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    moon_line_tg_btn.textHorizontalAlignment = al_left;		
     moon_line_tg_btn.fontFamily = 'monospace';
     if (moon_tg_visible==1) {
         moon_line_tg_btn.background="green";
@@ -6794,7 +6960,7 @@ var createScene = function () {
     moon_line_tp_btn.left="20px";
     moon_line_tp_btn.horizontalAlignment = al_left;
     moon_line_tp_btn.verticalAlignment  = al_top;
-    moon_line_tp_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    moon_line_tp_btn.textHorizontalAlignment = al_left;		
     moon_line_tp_btn.fontFamily = 'monospace';
     if (moon_tp_visible==1) {
         moon_line_tp_btn.background="green";
@@ -6836,7 +7002,7 @@ var createScene = function () {
     moon_cut_tp_btn.left="20px";
     moon_cut_tp_btn.horizontalAlignment = al_left;
     moon_cut_tp_btn.verticalAlignment  = al_top;
-    moon_cut_tp_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    moon_cut_tp_btn.textHorizontalAlignment = al_left;		
     moon_cut_tp_btn.fontFamily = 'monospace';
     moon_cut_tp_btn.isEnabled=0;
     if (moon_tp_visible==1) {
@@ -6878,7 +7044,7 @@ var createScene = function () {
     moonaltaz1_btn.left="128px";
     moonaltaz1_btn.horizontalAlignment = al_left;
     moonaltaz1_btn.verticalAlignment  = al_top;
-    moonaltaz1_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    moonaltaz1_btn.textHorizontalAlignment = al_left;		
     moonaltaz1_btn.fontFamily = 'monospace';
     moonaltaz1_btn.onPointerClickObservable.add(function() {
 
@@ -6916,7 +7082,7 @@ var createScene = function () {
     moonaltaz2_btn.left="128px";
     moonaltaz2_btn.horizontalAlignment = al_left;
     moonaltaz2_btn.verticalAlignment  = al_top;
-    moonaltaz2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    moonaltaz2_btn.textHorizontalAlignment = al_left;		
     moonaltaz2_btn.fontFamily = 'monospace';
     moonaltaz2_btn.onPointerClickObservable.add(function() {
 
@@ -6953,7 +7119,7 @@ var createScene = function () {
     moonpar_btn.left="10px";
     moonpar_btn.horizontalAlignment = al_left;
     moonpar_btn.verticalAlignment  = al_top;
-    moonpar_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    moonpar_btn.textHorizontalAlignment = al_left;		
     moonpar_btn.fontFamily = 'monospace';
     //moonpar_btn.isHighlighted=0;
     moon_rect.addControl(moonpar_btn);
@@ -6998,7 +7164,7 @@ var createScene = function () {
     moon_tr_btn.left="104px";
     moon_tr_btn.horizontalAlignment = al_left;
     moon_tr_btn.verticalAlignment  = al_top;
-    moon_tr_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    moon_tr_btn.textHorizontalAlignment = al_left;		
     moon_tr_btn.fontFamily = 'monospace';
     moon_tr_btn.onPointerClickObservable.add(function() {
 
@@ -7007,17 +7173,17 @@ var createScene = function () {
             moon_tr_a=0;
             moon_tr_btn.background="red";
 
-            moon_tr_line_data=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
-            moon_tr_line_data_fe=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
+            moon_tr_line_data=[ nan,nan];
+            moon_tr_line_data_fe=[ nan,nan];
 
             moon_tr_np=1;
 
             moon_tr_line.dispose();
             moon_tr_line =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: moon_tr_line_data},scene,true); 
-            moon_tr_line.color=new BABYLON.Color3(1, 1, 1);
+            moon_tr_line.material=mooncutMat2;
             moon_tr_line_fe.dispose();
             moon_tr_line_fe =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: moon_tr_line_data_fe},scene,true); 
-            moon_tr_line_fe.color=new BABYLON.Color3(1, 1, 1);
+            moon_tr_line_fe.material=mooncutMat2;
 
         }   else {
 
@@ -7060,7 +7226,7 @@ var createScene = function () {
     sun_line_tg_btn.left="20px";
     sun_line_tg_btn.horizontalAlignment = al_left;
     sun_line_tg_btn.verticalAlignment  = al_top;
-    sun_line_tg_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    sun_line_tg_btn.textHorizontalAlignment = al_left;		
     sun_line_tg_btn.fontFamily = 'monospace';
     if (sun_tg_visible==1) {
         sun_line_tg_btn.background="green";
@@ -7098,7 +7264,7 @@ var createScene = function () {
     sun_tr_btn.left="104px";
     sun_tr_btn.horizontalAlignment = al_left;
     sun_tr_btn.verticalAlignment  = al_top;
-    sun_tr_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    sun_tr_btn.textHorizontalAlignment = al_left;		
     sun_tr_btn.fontFamily = 'monospace';
     sun_tr_btn.onPointerClickObservable.add(function() {
 
@@ -7107,17 +7273,17 @@ var createScene = function () {
             sun_tr_a=0;
             sun_tr_btn.background="red";
 
-            sun_tr_line_data=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
-            sun_tr_line_data_fe=[ new BABYLON.Vector3(NaN,NaN,NaN),new BABYLON.Vector3(NaN,NaN,NaN)];
+            sun_tr_line_data=[nan,nan];
+            sun_tr_line_data_fe=[nan,nan];
 
             sun_tr_np=1;
 
             sun_tr_line.dispose();
             sun_tr_line =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: sun_tr_line_data},scene,true); 
-            sun_tr_line.color=new BABYLON.Color3(1, 1, 0);
+            sun_tr_line.material=suncutMat2;
             sun_tr_line_fe.dispose();
             sun_tr_line_fe =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: sun_tr_line_data_fe},scene,true); 
-            sun_tr_line_fe.color=new BABYLON.Color3(1, 1, 0);
+            sun_tr_line_fe.material=suncutMat2;
 
         }   else {
 
@@ -7141,7 +7307,7 @@ var createScene = function () {
     sun_line_tp_btn.left="20px";
     sun_line_tp_btn.horizontalAlignment = al_left;
     sun_line_tp_btn.verticalAlignment  = al_top;
-    sun_line_tp_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    sun_line_tp_btn.textHorizontalAlignment = al_left;		
     sun_line_tp_btn.fontFamily = 'monospace';
     if (sun_tp_visible==1) {
         sun_line_tp_btn.background="green";
@@ -7183,7 +7349,7 @@ var createScene = function () {
     sun_cut_tp_btn.left="20px";
     sun_cut_tp_btn.horizontalAlignment = al_left;
     sun_cut_tp_btn.verticalAlignment  = al_top;
-    sun_cut_tp_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    sun_cut_tp_btn.textHorizontalAlignment = al_left;		
     sun_cut_tp_btn.fontFamily = 'monospace';
     sun_cut_tp_btn.isEnabled=0;
     if (sun_tp_visible==1) {
@@ -7223,7 +7389,7 @@ var createScene = function () {
     sunaltaz1_btn.left="128px";
     sunaltaz1_btn.horizontalAlignment = al_left;
     sunaltaz1_btn.verticalAlignment  = al_top;
-    sunaltaz1_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    sunaltaz1_btn.textHorizontalAlignment = al_left;		
     sunaltaz1_btn.fontFamily = 'monospace';
     sunaltaz1_btn.onPointerClickObservable.add(function() {
 
@@ -7260,7 +7426,7 @@ var createScene = function () {
     sunaltaz2_btn.left="128px";
     sunaltaz2_btn.horizontalAlignment = al_left;
     sunaltaz2_btn.verticalAlignment  = al_top;
-    sunaltaz2_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    sunaltaz2_btn.textHorizontalAlignment = al_left;		
     sunaltaz2_btn.fontFamily = 'monospace';
     sunaltaz2_btn.onPointerClickObservable.add(function() {
 
@@ -7298,7 +7464,7 @@ var createScene = function () {
     sunpar_btn.left="10px";
     sunpar_btn.horizontalAlignment = al_left;
     sunpar_btn.verticalAlignment  = al_top;
-    sunpar_btn.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    sunpar_btn.textHorizontalAlignment = al_left;		
     sunpar_btn.fontFamily = 'monospace';
     sun_rect.addControl(sunpar_btn);
 
@@ -7336,7 +7502,7 @@ var createScene = function () {
     closed_data_rect.background = "black";
     closed_data_rect.top="0px";
     closed_data_rect.left="0px";
-    closed_data_rect.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    closed_data_rect.horizontalAlignment = al_left;
     closed_data_rect.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
     closed_data_rect.alpha=1;
     closed_data_rect.isVisible=0;		
@@ -7354,7 +7520,7 @@ var createScene = function () {
     data_text_c.height="20px";
     data_text_c.horizontalAlignment = al_left;
     data_text_c.verticalAlignment  = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    data_text_c.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    data_text_c.textHorizontalAlignment = al_left;		
     data_text_c.fontFamily = 'monospace';
     data_text_c.onPointerClickObservable.add (function() {
         panelI_rect.isVisible=0;
@@ -7373,8 +7539,8 @@ var createScene = function () {
     data_text_o.width="120px";
     data_text_o.height="35px";
     data_text_o.horizontalAlignment = al_left;
-    data_text_o.verticalAlignment  = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    data_text_o.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;		
+    data_text_o.verticalAlignment  = al_top;
+    data_text_o.textHorizontalAlignment = al_left;		
     data_text_o.fontFamily = 'monospace';
     data_text_o.onPointerClickObservable.add (function() {
         panelI_rect.isVisible=1;
@@ -7480,63 +7646,67 @@ var createScene = function () {
             //de la esfera auxiliar y del cuadro de información
 
             if (info_orto==1) {
+
+                auxMat.emissiveColor=line_color_orto;
+                auxMat.diffuseColor=line_color_orto;
+                info_rect.color=line_color_orto.toHexString();
+
                 if (sp_sel==1) {
                     var line_data_sel=line_data;
                     var dist_line=dist_orto;
                     var max_dist=distancia_sp_suma;
-                    auxMat.emissiveColor=line_color_orto;
-                    info_rect.color=line_color_orto.toHexString();
                 } else {
                     var line_data_sel=line_data_fe;
                     var dist_line=dist_orto_fe;
                     var max_dist=distancia_fe_suma;
-                    auxMat.emissiveColor=line_color_orto;
-                    info_rect.color=line_color_orto.toHexString();
                 }
             }
             if (info_loxo==1) {
+
+                auxMat.emissiveColor=line_color_loxo;
+                auxMat.diffuseColor=line_color_loxo;
+                info_rect.color=line_color_loxo.toHexString();
+
                 if (sp_sel==1) {
                     var line_data_sel=line_data_lox;
                     var dist_line=dist_loxo;
                     var max_dist=distancia_sp_lox_suma;
-                    auxMat.emissiveColor=line_color_loxo;
-                    info_rect.color=line_color_loxo.toHexString();
                 } else {
                     var line_data_sel=line_data_lox_fe;
                     var dist_line=dist_loxo_fe;
                     var max_dist=distancia_fe_lox_suma;
-                    auxMat.emissiveColor=line_color_loxo;
-                    info_rect.color=line_color_loxo.toHexString();
                 }
             }
             if (info_flat==1) {
+
+                auxMat.emissiveColor=line_color_flat;
+                auxMat.diffuseColor=line_color_flat;
+                info_rect.color=line_color_flat.toHexString();
+
                 if (sp_sel==1) {
                     var line_data_sel=line_data_flat_sp;
                     var dist_line=dist_flat;
-                    var max_dist=distancia_sp_flat_suma;
-                    auxMat.emissiveColor=line_color_flat;
-                    info_rect.color=line_color_flat.toHexString();
+                    var max_dist=distancia_sp_flat_suma;    
                 } else {
                     var line_data_sel=line_data_flat_fe;
                     var dist_line=dist_flat_fe;
                     var max_dist=distancia_fe_flat_suma;
-                    auxMat.emissiveColor=line_color_flat;
-                    info_rect.color=line_color_flat.toHexString();
                 }
             }
             if (info_eqac==1) {
+
+                auxMat.emissiveColor=line_color_eqac;
+                auxMat.diffuseColor=line_color_eqac;
+                info_rect.color=line_color_eqac.toHexString();
+
                 if (sp_sel==1) {
                     var line_data_sel=line_data_eqac_sp;
                     var dist_line=dist_eqac;
-                    var max_dist=distancia_sp_eqac_suma;
-                    auxMat.emissiveColor=line_color_eqac;
-                    info_rect.color=line_color_eqac.toHexString();
+                    var max_dist=distancia_sp_eqac_suma;    
                 } else {
                     var line_data_sel=line_data_eqac_fe;
                     var dist_line=dist_eqac_fe;
                     var max_dist=distancia_fe_eqac_suma;
-                    auxMat.emissiveColor=line_color_eqac;
-                    info_rect.color=line_color_eqac.toHexString();
                 }
             }
 
@@ -8251,7 +8421,7 @@ var createScene = function () {
         ortodromic_line.dispose();
         //Creación de la ortodrómica sobre la esfera
         ortodromic_line =BABYLON.MeshBuilder.CreateLines ( "ortodromic_line", {points: line_data},scene,true); 
-        ortodromic_line.color = line_color_orto;
+        ortodromic_line.material=ol_mat;
         ortodromic_line.isVisible=orto_es_visible;
 
         //Destrucción de la ortodrómica proyectada 
@@ -8260,14 +8430,14 @@ var createScene = function () {
         //Creación de la ortodrómica proyectada 
         //sobre la tierra plana
         ortodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "ortodromic_line_fe", {points: line_data_fe},scene,true); 
-        ortodromic_line_fe.color = line_color_orto;
+        ortodromic_line_fe.material=ol_mat;
         ortodromic_line_fe.isVisible=orto_es_visible;
 
         //Destrucción de la línea loxodrómica sobre la esfera
         loxodromic_line.dispose();
         //Creación de línea loxodrómica sobre la esfera
         loxodromic_line =BABYLON.MeshBuilder.CreateLines ( "loxodromic_line", {points: line_data_lox},scene,true); 
-        loxodromic_line.color = line_color_loxo;
+        loxodromic_line.material = ll_mat;
         loxodromic_line.isVisible=loxo_es_visible;
 
         //Destrucción de la línea loxodrómica
@@ -8275,7 +8445,7 @@ var createScene = function () {
         loxodromic_line_fe.dispose();
         //Creación de la línea loxodrómica proyectada sobre la tierra plana
         loxodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "loxodromic_line", {points: line_data_lox_fe},scene,true); 
-        loxodromic_line_fe.color = line_color_loxo;
+        loxodromic_line_fe.material = ll_mat;
         loxodromic_line_fe.isVisible=loxo_es_visible;
 
         //Destrucción de la línea flatodrómica
@@ -8283,7 +8453,7 @@ var createScene = function () {
         flatodromic_line_fe.dispose();
         //Creación de la línea flatodromica sobre la tierra plana
         flatodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "flatodromic_line", {points: line_data_flat_fe},scene,true); 
-        flatodromic_line_fe.color = line_color_flat;
+        flatodromic_line_fe.material = fl_mat;
         flatodromic_line_fe.isVisible=flato_es_visible;
 
         //Destrucción de la línea flatodrómica
@@ -8291,7 +8461,7 @@ var createScene = function () {
         flatodromic_line_sp.dispose();
         //Creación de la línea flatodromica sobre la esfera
         flatodromic_line_sp =BABYLON.MeshBuilder.CreateLines ( "flatodromic_line", {points: line_data_flat_sp},scene,true); 
-        flatodromic_line_sp.color = line_color_flat;
+        flatodromic_line_sp.material=fl_mat;
         flatodromic_line_sp.isVisible=flato_es_visible;
 
         //Destrucción de la línea equiangular
@@ -8299,7 +8469,7 @@ var createScene = function () {
         equiangular_line_fe.dispose();
         //Creación de la línea equiangular sobre la tierra plana
         equiangular_line_fe =BABYLON.MeshBuilder.CreateLines ( "equiangular_line", {points: line_data_eqac_fe},scene,true); 
-        equiangular_line_fe.color = line_color_eqac;
+        equiangular_line_fe.material=el_mat;
         equiangular_line_fe.isVisible=eqac_es_visible;
 
         //Destrucción de la línea equiangular
@@ -8307,68 +8477,62 @@ var createScene = function () {
         equiangular_line_sp.dispose();
         //Creación de la línea equiangular sobre la esfera
         equiangular_line_sp =BABYLON.MeshBuilder.CreateLines ( "equiangular_line", {points: line_data_eqac_sp},scene,true); 
-        equiangular_line_sp.color = line_color_eqac;
+        equiangular_line_sp.material=el_mat;
         equiangular_line_sp.isVisible=eqac_es_visible;
+
+        /////////////
 
         moon_line_1.dispose();
         moon_line_1 =BABYLON.MeshBuilder.CreateLines ( "moon_line_1", {points: moon_line_data_1},scene,true); 
-        //moon_line_1.color=new BABYLON.Color3(1, 0, 0);
-        moon_line_1.color=line_color_moon;
+        moon_line_1.material=ml_mat;
         moon_line_1.isVisible=moon_tg_visible;
 
         moon_line_2.dispose();
         moon_line_2 =BABYLON.MeshBuilder.CreateLines ( "moon_line_2", {points: moon_line_data_2},scene,true); 
-        //moon_line_2.color=new BABYLON.Color3(0, 0, 1);
-        moon_line_2.color=line_color_moon;
+        moon_line_2.material=ml_mat;
         moon_line_2.isVisible=moon_tg_visible;
 
         moon_line_c.dispose();
         moon_line_c =BABYLON.MeshBuilder.CreateLines ( "moon_line_c", {points: moon_line_data_c},scene,true); 
-        //moon_line_c.color=new BABYLON.Color3(0.5,0.5,0.5);
-        moon_line_c.color=line_color_moon;
+        moon_line_c.material=ml_mat;
         moon_line_c.isVisible=moon_tg_visible;
 
         sun_line_1.dispose();
         sun_line_1 =BABYLON.MeshBuilder.CreateLines ( "sun_line_1", {points: sun_line_data_1},scene,true); 
-        //sun_line_1.color=new BABYLON.Color3(1, 0, 0);
-        sun_line_1.color=line_color_sun;
+        sun_line_1.material=sl_mat;
         sun_line_1.isVisible=sun_tg_visible;
 
         sun_line_2.dispose();
         sun_line_2 =BABYLON.MeshBuilder.CreateLines ( "sun_line_2", {points: sun_line_data_2},scene,true); 
-        //sun_line_2.color=new BABYLON.Color3(0, 0, 1);
-        sun_line_2.color=line_color_sun;
+        sun_line_2.material=sl_mat;
         sun_line_2.isVisible=sun_tg_visible;
 
         sun_line_c.dispose();
         sun_line_c =BABYLON.MeshBuilder.CreateLines ( "sun_line_c", {points: sun_line_data_c},scene,true); 
-        //sun_line_c.color=new BABYLON.Color3(1,1,0.5);
-        sun_line_c.color=line_color_sun;
+        sun_line_c.material=sl_mat;
         sun_line_c.isVisible=sun_tg_visible;
 
         fe_moon_line_1.dispose();
-        fe_moon_line_1 =BABYLON.MeshBuilder.CreateLines ( "moon_line_1", {points: fe_moon_line_data_1},scene,true); 
-        //fe_moon_line_1.color=new BABYLON.Color3(1, 0, 0);
-        fe_moon_line_1.color=line_color_moon;
+        fe_moon_line_1 =BABYLON.MeshBuilder.CreateLines ( "fe_moon_line_1", {points: fe_moon_line_data_1},scene,true); 
+        fe_moon_line_1.material=sl_mat;
         fe_moon_line_1.isVisible=moon_tp_visible;
 
         fe_moon_line_2.dispose();
-        fe_moon_line_2 =BABYLON.MeshBuilder.CreateLines ( "moon_line_2", {points: fe_moon_line_data_2},scene,true); 
-        //fe_moon_line_2.color=new BABYLON.Color3(0, 0, 1);
-        fe_moon_line_2.color=line_color_moon;
+        fe_moon_line_2 =BABYLON.MeshBuilder.CreateLines ( "fe_moon_line_2", {points: fe_moon_line_data_2},scene,true); 
+        fe_moon_line_2.material=sl_mat;
         fe_moon_line_2.isVisible=moon_tp_visible;
 
         fe_sun_line_1.dispose();
-        fe_sun_line_1 =BABYLON.MeshBuilder.CreateLines ( "sun_line_1", {points: fe_sun_line_data_1},scene,true); 
-        //fe_sun_line_1.color=new BABYLON.Color3(1, 0, 0);
-        fe_sun_line_1.color=line_color_sun;
+        fe_sun_line_1 =BABYLON.MeshBuilder.CreateLines ( "fe_sun_line_1", {points: fe_sun_line_data_1},scene,true); 
+        fe_sun_line_1.material=sl_mat;
         fe_sun_line_1.isVisible=sun_tp_visible;
 
         fe_sun_line_2.dispose();
-        fe_sun_line_2 =BABYLON.MeshBuilder.CreateLines ( "sun_line_2", {points: fe_sun_line_data_2},scene,true); 
-        //fe_sun_line_2.color=new BABYLON.Color3(0, 0, 1);
-        fe_sun_line_2.color=line_color_sun;
+        fe_sun_line_2 =BABYLON.MeshBuilder.CreateLines ( "fe_sun_line_2", {points: fe_sun_line_data_2},scene,true); 
+        fe_sun_line_2.material=sl_mat;
         fe_sun_line_2.isVisible=sun_tp_visible;
+
+        /////////
 
         //Flechs de dirección del Sol en la TP
         fe_sun_arrow_1.dispose();
@@ -8604,77 +8768,80 @@ var createScene = function () {
         //de las direcciones hacia La Luna en la TP
         moon_cut_line.dispose();
         moon_cut_line =BABYLON.MeshBuilder.CreateLines ( "moon_cut_line", {points: moon_cut_line_data},scene,true); 
-        moon_cut_line.color=new BABYLON.Color3(0.7, 0.7, 0.7);
+        moon_cut_line.material=mooncutMat2;
         moon_cut_line.isVisible=moon_tp_visible*moon_tp_cut_visible;
 
-        moon_cut_sphere.position=moon_cut_p;
+        moon_cut_sphere.position=moon_cut_p.subtract(zero);
+        moon_cut_sphere.material=mooncutMat;
         moon_cut_sphere.isVisible=moon_tp_visible*moon_tp_cut_visible;
     
         //Actualización de la línea y punto de corte
         //de las direcciones hacia el Sol en la TP
         sun_cut_line.dispose();
         sun_cut_line =BABYLON.MeshBuilder.CreateLines ( "sun_cut_line", {points: sun_cut_line_data},scene,true); 
-        sun_cut_line.color=new BABYLON.Color3(1,1,0);
+        sun_cut_line.material=suncutMat2;
         sun_cut_line.isVisible=sun_tp_visible*sun_tp_cut_visible;
 
-        sun_cut_sphere.position=sun_cut_p;
+        sun_cut_sphere.position=sun_cut_p.subtract(zero);
+        sun_cut_sphere.material=suncutMat;
         sun_cut_sphere.isVisible=sun_tp_visible*sun_tp_cut_visible;
 
         //Actualización de las líneas de observación de usuario
         user_line_1.dispose();
         user_line_1 =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: user_data_line_1},scene,true); 
-        user_line_1.color=new BABYLON.Color3(1, 0, 0);
+        user_line_1.material=redMat2;
         user_line_1.isVisible=user_tg_lines_visible;
 
         user_line_2.dispose();
         user_line_2 =BABYLON.MeshBuilder.CreateLines ( "user_line_2", {points: user_data_line_2},scene,true); 
-        user_line_2.color=new BABYLON.Color3(0, 0, 1);
+        user_line_2.material=blueMat2;
         user_line_2.isVisible=user_tg_lines_visible;
 
         //Líneas de observación de usuario sobre la TP
         fe_user_line_1.dispose();
         fe_user_line_1 =BABYLON.MeshBuilder.CreateLines ( "fe_user_line_1", {points: fe_user_data_line_1},scene,true); 
-        fe_user_line_1.color=new BABYLON.Color3(1, 0, 0);
+        fe_user_line_1.material=redMat2;
         fe_user_line_1.isVisible=user_tp_lines_visible;
 
         fe_user_line_2.dispose();
         fe_user_line_2 =BABYLON.MeshBuilder.CreateLines ( "fe_user_line_2", {points: fe_user_data_line_2},scene,true); 
-        fe_user_line_2.color=new BABYLON.Color3(0, 0, 1);
+        fe_user_line_2.material=blueMat2;
         fe_user_line_2.isVisible=user_tp_lines_visible;
 
         //Rose lines
         rose_line.dispose();
         rose_line =BABYLON.MeshBuilder.CreateLines ( "rose_line", {points: rose_lines_data, colors: rose_lines_color_data},scene,true); 
-    
+        rose_line.material=auxMat2;
+
         //Líneas de eclipse
         eclipse_line_umbra.dispose();
         eclipse_line_umbra =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_umbra},scene,true); 
-        eclipse_line_umbra.color=new BABYLON.Color3(1,0,0);
+        eclipse_line_umbra.material=eclu_mat;
 
         eclipse_line_penumbra.dispose();
         eclipse_line_penumbra =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_penumbra},scene,true); 
-        eclipse_line_penumbra.color=new BABYLON.Color3(1,1,0);
+        eclipse_line_penumbra.material=eclp_mat;
 
         eclipse_line_umbra_fe.dispose();
         eclipse_line_umbra_fe =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_umbra_fe},scene,true); 
-        eclipse_line_umbra_fe.color=new BABYLON.Color3(1,0,0);
+        eclipse_line_umbra_fe.material=eclu_mat;
 
         eclipse_line_penumbra_fe.dispose();
         eclipse_line_penumbra_fe =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_penumbra_fe},scene,true); 
-        eclipse_line_penumbra_fe.color=new BABYLON.Color3(1,1,0);
+        eclipse_line_penumbra_fe.material=eclp_mat;
 
         //Comprobaciones relacionadas con el eclipse
         sumo_line_sp.dispose();
         sumo_line_sp =BABYLON.MeshBuilder.CreateLines ( "sun-moon line sp", {points: sumopos_sp},scene,true); 
-        sumo_line_sp.color=new BABYLON.Color3(1, 1, 1);
+        sumo_line_sp.material=auxMat2;
         
         sumo_line_fe.dispose();
         sumo_line_fe =BABYLON.MeshBuilder.CreateLines ( "sun-moon line fe", {points: sumopos_fe},scene,true); 
-        sumo_line_fe.color=new BABYLON.Color3(1, 1, 1);
+        sumo_line_fe.material=auxMat2;
 
         sumopro_line_sp.dispose();
         sumopro_line_sp =BABYLON.MeshBuilder.CreateLines ( "sun-moon line fe", {points: sumopro_sp},scene,true); 
-        sumopro_line_sp.color=new BABYLON.Color3(1, 1, 1);
+        sumopro_line_sp.material=auxMat2;
         sumopro_line_sp.alpha=0.125;
 
         sumo_line_sp.isVisible=eclipse_test;
@@ -8684,12 +8851,12 @@ var createScene = function () {
         //Línea de iluminación
         ilu_line_sp.dispose();
         ilu_line_sp =BABYLON.MeshBuilder.CreateLines ( "ilumination line", {points: ilu_data_sp},scene,true); 
-        ilu_line_sp.color=ilu_color;
+        ilu_line_sp.material=auxMat2;
         ilu_line_sp.alpha=ilu_alpha;
         ilu_line_sp.isVisible=ilu_is_visible;
         ilu_line_fe.dispose();
         ilu_line_fe =BABYLON.MeshBuilder.CreateLines ( "ilumination line", {points: ilu_data_fe},scene,true); 
-        ilu_line_fe.color=ilu_color;
+        ilu_line_fe.material=auxMat2;
         ilu_line_fe.alpha=ilu_alpha;
         ilu_line_fe.isVisible=ilu_is_visible;
 
@@ -8726,10 +8893,10 @@ var createScene = function () {
             
             sun_tr_line.dispose();
             sun_tr_line =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: sun_tr_line_data},scene,true); 
-            sun_tr_line.color=new BABYLON.Color3(1, 1, 0);
+            sun_tr_line.material=suncutMat2;
             sun_tr_line_fe.dispose();
             sun_tr_line_fe =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: sun_tr_line_data_fe},scene,true); 
-            sun_tr_line_fe.color=new BABYLON.Color3(1, 1, 0);
+            sun_tr_line_fe.material=suncutMat2;
 
         }
 
@@ -8752,10 +8919,10 @@ var createScene = function () {
             
             moon_tr_line.dispose();
             moon_tr_line =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: moon_tr_line_data},scene,true); 
-            moon_tr_line.color=new BABYLON.Color3(1, 1, 1);
+            moon_tr_line.material=mooncutMat2;
             moon_tr_line_fe.dispose();
             moon_tr_line_fe =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: moon_tr_line_data_fe},scene,true); 
-            moon_tr_line_fe.color=new BABYLON.Color3(1, 1, 1);
+            moon_tr_line_fe.material=mooncutMat2;
 
         }
 
