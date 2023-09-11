@@ -253,7 +253,7 @@ fe_h=rfe/200.0;
 
 //Radio visual de las líneas
 //sobre la esfera
-deltar=1.002*0+1.0002;
+deltar=1.002*0+1.002;
 rdeltar=r*deltar;
 
 //Radio de la La Tierra
@@ -760,7 +760,6 @@ function calc_sun_pos() {
     //distancia desde el foco
     var sun_lighttime=-149597870.7*Math.sqrt(xv_p*xv_p+yv_p*yv_p)/299792.458/86400.0;
 
-    //console.log(sun_lighttime*24*60);
     //------------------------------------
 
     var d2k=(JD-2451543.5)+sun_lighttime;
@@ -1658,8 +1657,6 @@ var calculate_lines=function() {
     //Distancia Tierra-Luna
     moon_earth_distance=BABYLON.Vector3.Distance(moon_pos,zero)*6371/10.0;
 
-    //console.log(moon_earth_distance,sun_earth_distance);
-
     //Líneas de cada ubicación y el centro
     //hasta La Luna
     moon_line_data_1=[pos1,moon_pos];
@@ -1677,7 +1674,6 @@ var calculate_lines=function() {
 
     //Ubicación sobre la TP donde La Luna es cenital
     moon_fe_pos=rlatlon_to_xyz_fe(rfe,moon_latc,moon_lonc,0);
-    //console.log(moon_fe_pos);
     
     moon_sphere_pos.scaleInPlace(r);
 
@@ -1728,7 +1724,6 @@ var calculate_lines=function() {
     var mf_cp=BABYLON.Vector3.Cross(mf_sp,mf_mp);
     mf_sgn=1;
     if (mf_cp.y>0) mf_sgn=-1;
-    //console.log(mf_ang,mf_sgn)
 
     //par=1 -> TG
     //par0  -> TP
@@ -2136,12 +2131,30 @@ var calculate_lines=function() {
     fe_sun_line_data_1=[pos3,pos3.add(fe_sun1)];
     fe_sun_line_data_2=[pos4,pos4.add(fe_sun2)];
 
-    //Datos de punta de flecha
+    //Datos de punta de flecha para las direcciones del Sol y La Luna sobre la tierra plana
     fe_sun_data_arrow_1=[(pos3.add(fe_sun1)).subtract(fe_sun1_v),pos3.add(fe_sun1)];
     fe_sun_data_arrow_2=[(pos4.add(fe_sun2)).subtract(fe_sun2_v),pos4.add(fe_sun2)];
 
     fe_moon_data_arrow_1=[(pos3.add(fe_moon1)).subtract(fe_moon1_v),pos3.add(fe_moon1)];
     fe_moon_data_arrow_2=[(pos4.add(fe_moon2)).subtract(fe_moon2_v),pos4.add(fe_moon2)];
+
+
+    //Inicialización de las puntas de flecha para las direcciones
+    //del Sol y la Luna en el plano de información local
+    rose_arrow_sun_b=[];rose_arrow_sun_e=[];
+    rose_arrow_moon_b=[];rose_arrow_moon_e=[];
+    rose_arrow_n_b=[];rose_arrow_n_e=[];
+    rose_arrow_s_b=[];rose_arrow_s_e=[];
+    for (var k=0;k<4;k++) {
+        rose_arrow_sun_b[k]=nan.subtract(zero);
+        rose_arrow_sun_e[k]=nan.subtract(zero);
+        rose_arrow_moon_b[k]=nan.subtract(zero);
+        rose_arrow_moon_e[k]=nan.subtract(zero);
+        rose_arrow_n_e[k]=nan.subtract(zero);
+        rose_arrow_n_b[k]=nan.subtract(zero);
+        rose_arrow_s_e[k]=nan.subtract(zero);
+        rose_arrow_s_b[k]=nan.subtract(zero);
+    }
 
     //---Fase lunar----
     var v_sun_moon=sun_pos.subtract(zero);
@@ -2161,8 +2174,6 @@ var calculate_lines=function() {
     mfc=0.5*(1-Math.cos(mfc))*100;
     if (mfc>99.99) mfc=99.99;
     meloc=Math.acos(BABYLON.Vector3.Dot(v_moon_pos_c,v_sun_pos_c))/dtor;
-
-    //console.log(mfc,meloc);
 
     var v_moon_pos_1=moon_pos.subtract(zero);
     var v_sun_pos_1=sun_pos.subtract(zero);
@@ -2192,8 +2203,6 @@ var calculate_lines=function() {
     if (mf2>99.99) mf2=99.99;
     melo2=Math.acos(BABYLON.Vector3.Dot(v_moon_pos_2,v_sun_pos_2))/dtor;
 
-    //console.log(mfc,mf1,mf2);
-    //console.log(meloc,melo1,melo2);
     //----------------------------
 
 
@@ -2244,6 +2253,8 @@ var calculate_lines=function() {
         
         var r_escala=0.5;
         for (var k=0;k<4;k++) {
+
+            
 
             if (k==0) {
 
@@ -2361,12 +2372,88 @@ var calculate_lines=function() {
             rose_p2=rose_p2.scale(1.5);
             rose_p2=rose_p2.add(rpos);
 
-            rose_lines_data[n_rose_lines_data]=rose_p1;
+            //Extremos de las flechas de dirección al Sol
+            rose_arrow_sun_e[k]=((rose_p2.subtract(rpos)).scale(0.85)).add(rpos);
+            rose_arrow_sun_b[k]=rose_p2.subtract(zero);
+
+            rose_lines_data[n_rose_lines_data]=rose_p1.subtract(zero);
             rose_lines_color_data[n_rose_lines_data]=rcolor;
             n_rose_lines_data++;
-            rose_lines_data[n_rose_lines_data]=rose_p2;
+            rose_lines_data[n_rose_lines_data]=rose_p2.subtract(zero);
             rose_lines_color_data[n_rose_lines_data]=rcolor;
             n_rose_lines_data++;
+
+            var rcolor=new BABYLON.Color4(0.5,0.5,0.5,1);
+            rose_p1=rpos.subtract(zero);
+            if (k==0) {
+                rose_p2=local_altaz_to_xyz(ori_un1,ori_ue1,ori_ur1,moon_alt1/dtor,moon_az1/dtor,0);
+            }
+            if (k==1) {
+                rose_p2=local_altaz_to_xyz(ori_un2,ori_ue2,ori_ur2,moon_alt2/dtor,moon_az2/dtor,0);
+            }
+            if (k==2) {
+                rose_p2=local_altaz_to_xyz(fe_un1,fe_ue1,fe_ur1,moon_alt1/dtor,moon_az1/dtor,1);
+            }
+            if (k==3) {
+                rose_p2=local_altaz_to_xyz(fe_un2,fe_ue2,fe_ur2,moon_alt2/dtor,moon_az2/dtor,1);
+            }
+
+            rose_p2.normalize();
+            rose_p2=rose_p2.scale(1.5);
+            rose_p2=rose_p2.add(rpos);
+
+            //Extremos de las flechas de dirección a La Luna
+            rose_arrow_moon_e[k]=((rose_p2.subtract(rpos)).scale(0.85)).add(rpos);
+            rose_arrow_moon_b[k]=rose_p2.subtract(zero);
+
+            rose_lines_data[n_rose_lines_data]=rose_p1.subtract(zero);
+            rose_lines_color_data[n_rose_lines_data]=rcolor;
+            n_rose_lines_data++;
+            rose_lines_data[n_rose_lines_data]=rose_p2.subtract(zero);
+            rose_lines_color_data[n_rose_lines_data]=rcolor;
+            n_rose_lines_data++;
+
+            //Añade un punto nulo a la lista
+            //Fin de la cadena de líneas
+            rose_p3=nan.subtract(zero);
+            rose_lines_data[n_rose_lines_data]=rose_p3;
+            rose_lines_color_data[n_rose_lines_data]=rcolor;
+            n_rose_lines_data++;
+
+            var rcolor=new BABYLON.Color4(1,0.0,1,1);
+            rose_p1=rpos.subtract(zero);
+            if (k==0) {
+                rose_p2=local_altaz_to_xyz(ori_un1,ori_ue1,ori_ur1,lat01/dtor,0,0);
+            }
+            if (k==1) {
+                rose_p2=local_altaz_to_xyz(ori_un2,ori_ue2,ori_ur2,lat02/dtor,0,0);
+            }
+            if (k==2) {
+                rose_p2=local_altaz_to_xyz(fe_un1,fe_ue1,fe_ur1,lat01/dtor,0,1);
+            }
+            if (k==3) {
+                rose_p2=local_altaz_to_xyz(fe_un2,fe_ue2,fe_ur2,lat02/dtor,0,1);
+            }
+
+            rose_p2.normalize();
+            rose_p2=rose_p2.scale(1.5);
+            rose_p1=rose_p2.scale(-1);
+            rose_p2=rose_p2.add(rpos);
+            rose_p1=rose_p1.add(rpos);
+         
+            //Extremos de las flechas de dirección al polo norte y sur celeste
+            rose_arrow_n_e[k]=((rose_p2.subtract(rpos)).scale(0.85)).add(rpos);
+            rose_arrow_n_b[k]=rose_p2.subtract(zero);
+            rose_arrow_s_e[k]=((rose_p1.subtract(rpos)).scale(0.85)).add(rpos);
+            rose_arrow_s_b[k]=rose_p1.subtract(zero);
+
+            rose_lines_data[n_rose_lines_data]=rose_p1.subtract(zero);
+            rose_lines_color_data[n_rose_lines_data]=rcolor;
+            n_rose_lines_data++;
+            rose_lines_data[n_rose_lines_data]=rose_p2.subtract(zero);
+            rose_lines_color_data[n_rose_lines_data]=rcolor;
+            n_rose_lines_data++;
+
             //Añade un punto nulo a la lista
             //Fin de la cadena de líneas
             rose_p3=nan.subtract(zero);
@@ -2393,7 +2480,7 @@ var calculate_lines=function() {
                 if (k==3) {
                     var rvn=so3_rotation(change_yz(fe_ue2),-lat02+Math.PI/2,change_yz(fe_un2));  
                     var rve=change_yz(fe_ue2);
-                    var rvr=so3_rotation(change_yz(fe_ue2),-lat01+Math.PI/2,change_yz(fe_ur2));            
+                    var rvr=so3_rotation(change_yz(fe_ue2),-lat02+Math.PI/2,change_yz(fe_ur2));            
                 }
                 
                 var rcos=Math.cos(rose_ang);
@@ -2457,7 +2544,7 @@ var calculate_lines=function() {
                     var angle_bo=Math.acos(BABYLON.Vector3.Dot(vector_r,rose_p1n));
                     rcolor=new BABYLON.Color4(0.5,0.5,0.5,1);
                     if (angle_bo>Math.PI/2.0) {
-                        rcolor=new BABYLON.Color4(1,1,0,0);
+                        rcolor=new BABYLON.Color4(0.5,0.5,0.5,0);
                     }
                     //
 
@@ -2596,8 +2683,8 @@ var calculate_lines=function() {
 
             //Coordenadas x e y del mapa de sombra
             //con el (0,0) en la mitad
-            ilx=2*(columna/(ilu_ts+1)-0.5);
-            ily=2*(fila/(ilu_ts+1)-0.5);
+            ilx=2*(columna/(ilu_ts-1)-0.5);
+            ily=2*(fila/(ilu_ts-1)-0.5);
 
             //Distancia al centro del mapa y
             // ángulo respecto a la referencia x
@@ -2615,7 +2702,7 @@ var calculate_lines=function() {
 
             //Se puede considerar en primera aproximación que
             //la dirección al Sol depende muy poco de la ubicación
-            //y se puede considerar constante.
+            //y se puede asumir dicha constante.
             //Si no estás deacuerdo, descomenta las dos líneas siguientes.
             //var spn=sun_pos.subtract(ile);
             //spn.normalize();
@@ -2779,18 +2866,20 @@ var calculate_lines=function() {
 }
 
 
-var createScene = function () {
+var createScene =  function () {
 
     var scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color3(0.0, 0.0, 0.0);
 
     //Cámara
-    var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0, 10, zero, scene);
+    var camera = new BABYLON.ArcRotateCamera("Camera main", 0, 0, 10, zero, scene);
     camera.setPosition(new BABYLON.Vector3(4*r, 0, 0));
     camera.attachControl(canvas, true);
     camera.radius=4*r;
     camera.lowerRadiusLimit=2*r;
     camera.upperRadiusLimit=8*r;
+    camera.maxZ=3e7;
+    camera.minZ=0.01;
 
     //Solo se permite el uso del botón izquierdo 
     //del ratón
@@ -2801,11 +2890,16 @@ var createScene = function () {
 	input.multiTouchPanAndZoom = false;
 	input.multiTouchPanning = false;
 
-    camera.viewport = new BABYLON.Viewport(0.0, 0.0, 1.0, 1.0);
-
     //Cámaras apuntando a La Luna
-    var camera_moon_1=new BABYLON.TargetCamera("Camera", 0, 0, 10, zero, scene);
-    var camera_moon_2=new BABYLON.TargetCamera("Camera", 0, 0, 10, zero, scene);
+    var camera_moon_1=new BABYLON.TargetCamera("Camera moon 1", 0, 0, 10, zero, scene);
+    var camera_moon_2=new BABYLON.TargetCamera("Camera moon 2", 0, 0, 10, zero, scene);
+
+    //Camaras activas, la última en definirse
+    //tiene el control del movimiento del ratón
+    scene.activeCameras=[];
+    scene.activeCameras.push(camera_moon_1);
+    scene.activeCameras.push(camera_moon_2);
+    scene.activeCameras.push(camera);
 
     //Tamaño del viewport
     //según posición en la esquina
@@ -2816,23 +2910,18 @@ var createScene = function () {
         var vps=0.15/1000;
     }
 
+    camera.viewport = new BABYLON.Viewport(0.0, 0.0, 1.0, 1.0);
     camera_moon_1.viewport=new BABYLON.Viewport(1-vps, 1-vps, vps, vps);
     camera_moon_2.viewport=new BABYLON.Viewport(1-vps, 1-2*vps, vps, vps);
 
-    //Camaras activas, la última en definirse
-    //tiene el control del movimiento del ratón
-    
-    scene.activeCameras.push(camera_moon_1);
-    scene.activeCameras.push(camera_moon_2);
-    scene.activeCameras.push(camera);
     
     //Máscaras de cámara para
     //evitar que el GUI se represente
     //en los viewports de las cámaras 
     //adicionales
-    camera.layerMask =       0x00001000;
-    camera_moon_1.layerMask= 0x00000100;
-    camera_moon_2.layerMask= 0x00000010;
+    camera.layerMask =       0x10000001;
+    camera_moon_1.layerMask= 0x00000010;
+    camera_moon_2.layerMask= 0x00000100;
     
     //Campo visual de las cámaras adicionales
     //Típicamente el doble del tamaño de La Luna (~1º)
@@ -2995,9 +3084,10 @@ var createScene = function () {
     //MoonSphere.isBlocker=true;
 
     //Esfera de El Sol
-    var SunMat = new BABYLON.StandardMaterial("Moon", scene);
-    SunMat.diffuseColor = new BABYLON.Color3(1, 1, 0);
+    var SunMat = new BABYLON.StandardMaterial("Sun", scene);
+    SunMat.diffuseColor = new BABYLON.Color3(1,1,0);
     SunMat.emissiveColor = new BABYLON.Color3(1,1,0);
+    SunMat.specularColor = new BABYLON.Color3(0,0,0);
     SunMat.backFaceCulling = true;
     SunMat.useLogarithmicDepth = true;
 
@@ -3071,7 +3161,7 @@ var createScene = function () {
     sunMat1.alpha=0.9;
     sunMat1.useLogarithmicDepth = true;
 
-    var sunSphere = BABYLON.MeshBuilder.CreateSphere("moon", {diameter:0.3}, scene);
+    var sunSphere = BABYLON.MeshBuilder.CreateSphere("sun", {diameter:0.3}, scene);
     sunSphere.material = sunMat1;
     sunSphere.position=sun_sphere_pos;
 
@@ -3162,7 +3252,7 @@ var createScene = function () {
     
     //Línea orotodrímica proyectada sobre la tierra plana
     ortodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "ortodromic_line_fe", {points: line_data_fe},scene,true); 
-    ortodromic_line_fe.color = ol_mat;
+    ortodromic_line_fe.material = ol_mat;
     ortodromic_line_fe.isVisible=orto_es_visible;
 
     //Material de la línea loxodromica
@@ -3179,7 +3269,7 @@ var createScene = function () {
 
     //Línea loxodrómica proyectada sobre la tierra plana
     loxodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "loxodromic_line", {points: line_data_lox_fe},scene,true); 
-    loxodromic_line_fe.color = ll_mat;
+    loxodromic_line_fe.material = ll_mat;
     loxodromic_line_fe.isVisible=loxo_es_visible;
 
     //Material de la línea flatodrómica
@@ -3295,19 +3385,28 @@ var createScene = function () {
     blueArrowMat.useLogarithmicDepth=true;
     blueArrowMat.alpha=0.9;
 
-    var sunArrowMat = new BABYLON.StandardMaterial("red arrow", scene);
+    var sunArrowMat = new BABYLON.StandardMaterial("sun arrow", scene);
     sunArrowMat.diffuseColor = line_color_sun;
-    sunArrowMat.specularColor = line_color_sun;
+    //sunArrowMat.specularColor = new BABYLON.Color3(0,0,0);//line_color_sun;
+    sunArrowMat.ambientColor = new BABYLON.Color3(1,1,1);
     sunArrowMat.emissiveColor = line_color_sun;
     sunArrowMat.useLogarithmicDepth=true;
     sunArrowMat.alpha=0.9;
 
-    var moonArrowMat = new BABYLON.StandardMaterial("red arrow", scene);
+    var moonArrowMat = new BABYLON.StandardMaterial("moon arrow", scene);
     moonArrowMat.diffuseColor = line_color_moon;
-    moonArrowMat.specularColor = line_color_moon;
+    //moonArrowMat.specularColor = new BABYLON.Color3(0,0,0);//line_color_moon;
+    moonArrowMat.ambientColor = new BABYLON.Color3(0,0,0);
     moonArrowMat.emissiveColor = line_color_moon;
     moonArrowMat.useLogarithmicDepth=true;
     moonArrowMat.alpha=0.9;
+
+    var axisArrowMat = new BABYLON.StandardMaterial("axis arrow", scene);
+    axisArrowMat.diffuseColor = new BABYLON.Color3(1,0,1);
+    axisArrowMat.ambientColor = new BABYLON.Color3(0,0,0);
+    axisArrowMat.emissiveColor = new BABYLON.Color3(1,0,1);
+    axisArrowMat.useLogarithmicDepth=true;
+    axisArrowMat.alpha=0.9;
 
     //Flechas de dirección del Sol en la TP
     fe_sun_arrow_1 = BABYLON.MeshBuilder.CreateTube(
@@ -3365,6 +3464,64 @@ var createScene = function () {
     fe_moon_arrow_2.isVisible=moon_tp_visible;
     //
 
+    //
+    rose_arrow_sun=[];
+    rose_arrow_moon=[];
+    rose_arrow_n=[];
+    rose_arrow_s=[];
+    for (var k=0;k<4;k++) {
+
+        rose_arrow_sun[k] = BABYLON.MeshBuilder.CreateTube(
+        "tube", {
+            path: [rose_arrow_sun_b[k],rose_arrow_sun_e[k]], 
+            radiusFunction: radiusChange = (index, distance) => {
+                const radius =  distance / 3;
+                return radius;}, 
+            sideOrientation: BABYLON.Mesh.DOUBLESIDE
+        }, 
+        scene);
+        rose_arrow_sun[k].material=sunArrowMat;
+        rose_arrow_sun[k].isVisible=additional_model_info;
+
+        rose_arrow_moon[k] = BABYLON.MeshBuilder.CreateTube(
+        "tube", {
+            path: [rose_arrow_moon_b[k],rose_arrow_moon_e[k]], 
+            radiusFunction: radiusChange = (index, distance) => {
+                const radius =  distance / 3;
+                return radius;}, 
+            sideOrientation: BABYLON.Mesh.DOUBLESIDE
+        }, 
+        scene);
+        rose_arrow_moon[k].material=moonArrowMat;
+        rose_arrow_moon[k].isVisible=additional_model_info;
+
+        rose_arrow_n[k] = BABYLON.MeshBuilder.CreateTube(
+        "tube", {
+            path: [rose_arrow_n_b[k],rose_arrow_n_e[k]], 
+            radiusFunction: radiusChange = (index, distance) => {
+                const radius =  distance / 3;
+                return radius;}, 
+            sideOrientation: BABYLON.Mesh.DOUBLESIDE
+        }, 
+        scene);
+        rose_arrow_n[k].material=axisArrowMat;
+        rose_arrow_n[k].isVisible=additional_model_info;
+
+        rose_arrow_s[k] = BABYLON.MeshBuilder.CreateTube(
+        "tube", {
+            path: [rose_arrow_s_b[k],rose_arrow_s_e[k]], 
+            radiusFunction: radiusChange = (index, distance) => {
+                const radius =  distance / 3;
+                return radius;}, 
+            sideOrientation: BABYLON.Mesh.DOUBLESIDE
+        }, 
+        scene);
+        rose_arrow_s[k].material=axisArrowMat;
+        rose_arrow_s[k].isVisible=additional_model_info;
+
+    }
+    //
+
     var shadowEarthMat = new BABYLON.StandardMaterial("Shadow Earth", scene);
     shadowEarthMat.diffuseColor = new BABYLON.Color3(1,0.1,0.1);
     //shadowEarthMat.specularColor = new BABYLON.Color3(0.1,0.1,0.1);
@@ -3382,7 +3539,7 @@ var createScene = function () {
     scene);
     //fe_sun_arrow_1.material=redArrowMat;
     shadowEarth.material=shadowEarthMat;
-    shadowEarth.layerMask= 0x00000110;
+    shadowEarth.layerMask= 0x10000000;
     light.excludedMeshes.push(shadowEarth);
 
     var shadowEarthMat2 = new BABYLON.StandardMaterial("Shadow Earth", scene);
@@ -3401,7 +3558,7 @@ var createScene = function () {
     scene);
     //fe_sun_arrow_1.material=redArrowMat;
     shadowEarth2.material=shadowEarthMat2;
-    shadowEarth2.layerMask= 0x00000110;
+    shadowEarth2.layerMask= 0x1000000;
     light.excludedMeshes.push(shadowEarth2);
 
     //Esfera de corte y línea de corte para La Luna
@@ -3651,11 +3808,13 @@ var createScene = function () {
 
     light.excludedMeshes.push(EarthSphere);
     light.excludedMeshes.push(MoonSphere);
+    light.excludedMeshes.push(SunSphere);
     light2 = new BABYLON.DirectionalLight("DirectionalLight", ssp, scene);
     light2.includedOnlyMeshe=EarthSphere;
     light2.excludedMeshes.push(MoonSphere);
     light2.excludedMeshes.push(shadowEarth);
     light2.excludedMeshes.push(shadowEarth2);
+    light2.excludedMeshes.push(SunSphere);
 
     msp=new BABYLON.Vector3(0,0,0);
     msp.copyFrom(sun_pos);
@@ -3669,8 +3828,10 @@ var createScene = function () {
     light3.excludedMeshes.push(blueSphere);
     light3.excludedMeshes.push(shadowEarth);
     light3.excludedMeshes.push(shadowEarth2);
+    light3.excludedMeshes.push(SunSphere);
     light3.intensity=4;
 
+    
     //GUI--------------------------------------------------------
 
     var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -7565,6 +7726,8 @@ var createScene = function () {
     });
     */
 
+    
+
     //Animación
     scene.registerBeforeRender(function () {
 
@@ -7598,15 +7761,14 @@ var createScene = function () {
     //Comportamiento al pulsar el botón del ratón
     var pointerDown = function (mesh) {
 
-        currentMesh = mesh;   
+        currentMesh = mesh;
 
         startingPoint = getScreenPosition();
 
         //Se desconecta la cámara
         //si el mesh seleccionado es 
         //la esfera roja o azul
-
-        if (startingPoint) { 
+        if (startingPoint ) { 
             setTimeout(function () {
                 camera.detachControl(canvas);
             }, 0);
@@ -7619,8 +7781,10 @@ var createScene = function () {
 
         //Se vuelve a conectar la cámara
         if (startingPoint) {
-            camera.attachControl(canvas, true);
+            
             startingPoint = null;
+            camera.attachControl(canvas, true);
+            
             return;
         }
 
@@ -7979,8 +8143,9 @@ var createScene = function () {
                     //Actualización de la posición 
                     //de la esfera roja
                     pos1=rlatlon_to_xyz(r,lat1,lon1,h1);
-
                     redSphere.position=pos1;
+                    pos3=rlatlon_to_xyz_fe(rfe,lat1,lon1,h1);
+                    redSphere_fe.position=pos3.subtract(zero);
 
                     var ax2=line_data[ndiv].x;
                     var ay2=line_data[ndiv].z;
@@ -7996,8 +8161,9 @@ var createScene = function () {
                     //Actualización de la posición 
                     //de la esfera roja
                     pos2=rlatlon_to_xyz(r,lat2,lon2,h2);
-
                     blueSphere.position=pos2;
+                    pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2,h2);
+                    blueSphere_fe.position=pos4.subtract(zero);
 
                 }
 
@@ -8046,8 +8212,9 @@ var createScene = function () {
 
                 //Actualización de la posición de la esfera roja
                 pos2=rlatlon_to_xyz(r,lat2,lon2,h2);
-
                 blueSphere.position=pos2;
+                pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2,h2);
+                blueSphere_fe.position=pos4.subtract(zero);
 
                 change_pos=1;
 
@@ -8072,7 +8239,6 @@ var createScene = function () {
             lat1=Math.PI*(0.5-dc_aux/(2*rfe));
             lon1=Math.atan2(pos3.z-fe_pos.z,pos3.x-fe_pos.x);
             
-            //console.log(dc_aux,2*r);
             if (dc_aux>2*rfe) {
                 pos3=pos3c;
                 lat1=lat1c;
@@ -8283,6 +8449,7 @@ var createScene = function () {
                 //sea la esfera de La Tierra
                 
 				if(pointerInfo.pickInfo.hit && pointerInfo.pickInfo.pickedMesh != EarthSphere && pointerInfo.pickInfo.pickedMesh != EarthDisk ) {
+                
                     pointerDown(pointerInfo.pickInfo.pickedMesh)
                 }
                 
@@ -8291,11 +8458,13 @@ var createScene = function () {
             //Al soltar el botón del ratón...
 			case BABYLON.PointerEventTypes.POINTERUP:
                     pointerUp();
+                    
 				break;
 
             //Al mover el ratón con el botón pulsado...
 			case BABYLON.PointerEventTypes.POINTERMOVE:          
                     pointerMove();
+
 				break;
 
             //Leve disminución de los tamaños de las
@@ -8545,7 +8714,6 @@ var createScene = function () {
             sideOrientation: BABYLON.Mesh.DOUBLESIDE
         }, 
         scene);
-        //fe_sun_arrow_1.material=redArrowMat;
         fe_sun_arrow_1.material=sunArrowMat;
         fe_sun_arrow_1.isVisible=sun_tp_visible;
     
@@ -8559,7 +8727,6 @@ var createScene = function () {
                 sideOrientation: BABYLON.Mesh.DOUBLESIDE
             }, 
         scene);
-        //fe_sun_arrow_2.material=blueArrowMat;
         fe_sun_arrow_2.material=sunArrowMat;
         fe_sun_arrow_2.isVisible=sun_tp_visible;
         //
@@ -8575,7 +8742,6 @@ var createScene = function () {
             sideOrientation: BABYLON.Mesh.DOUBLESIDE
         }, 
         scene);
-        //fe_moon_arrow_1.material=redArrowMat;
         fe_moon_arrow_1.material=moonArrowMat;
         fe_moon_arrow_1.isVisible=moon_tp_visible;
     
@@ -8589,10 +8755,67 @@ var createScene = function () {
                 sideOrientation: BABYLON.Mesh.DOUBLESIDE
             }, 
         scene);
-        //fe_moon_arrow_2.material=blueArrowMat;
         fe_moon_arrow_2.material=moonArrowMat;
         fe_moon_arrow_2.isVisible=moon_tp_visible;
         //
+
+        //Actualización de las puntas de flecha del plano
+        //de información local para el Sol, La Luna y el eje Norte-Sur
+        for (var k=0;k<4;k++) {
+
+            rose_arrow_sun[k].dispose();
+            rose_arrow_sun[k] = BABYLON.MeshBuilder.CreateTube(
+            "tube", {
+                path: [rose_arrow_sun_b[k],rose_arrow_sun_e[k]], 
+                radiusFunction: radiusChange = (index, distance) => {
+                    const radius =  distance / 3;
+                    return radius;}, 
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE
+            }, 
+            scene);
+            rose_arrow_sun[k].material=sunArrowMat;
+            rose_arrow_sun[k].isVisible=additional_model_info;
+
+            rose_arrow_moon[k].dispose();
+            rose_arrow_moon[k] = BABYLON.MeshBuilder.CreateTube(
+            "tube", {
+                path: [rose_arrow_moon_b[k],rose_arrow_moon_e[k]], 
+                radiusFunction: radiusChange = (index, distance) => {
+                    const radius =  distance / 3;
+                    return radius;}, 
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE
+            }, 
+            scene);
+            rose_arrow_moon[k].material=moonArrowMat;
+            rose_arrow_moon[k].isVisible=additional_model_info;
+
+            rose_arrow_n[k].dispose();
+            rose_arrow_n[k] = BABYLON.MeshBuilder.CreateTube(
+            "tube", {
+                path: [rose_arrow_n_b[k],rose_arrow_n_e[k]], 
+                radiusFunction: radiusChange = (index, distance) => {
+                    const radius =  distance / 3;
+                    return radius;}, 
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE
+            }, 
+            scene);
+            rose_arrow_n[k].material=axisArrowMat;
+            rose_arrow_n[k].isVisible=additional_model_info;
+
+            rose_arrow_s[k].dispose();
+            rose_arrow_s[k] = BABYLON.MeshBuilder.CreateTube(
+            "tube", {
+                path: [rose_arrow_s_b[k],rose_arrow_s_e[k]], 
+                radiusFunction: radiusChange = (index, distance) => {
+                    const radius =  distance / 3;
+                    return radius;}, 
+                sideOrientation: BABYLON.Mesh.DOUBLESIDE
+            }, 
+            scene);
+            rose_arrow_s[k].material=axisArrowMat;
+            rose_arrow_s[k].isVisible=additional_model_info;
+
+        }
 
         //Sombra de la Tierra 
         shadowEarth.dispose();
@@ -8951,33 +9174,32 @@ var createScene = function () {
         FlatEarthMat.ambientTexture=ilu_text;
     
     }
-
    
     return scene;
 };
 
-        window.initFunction = async function() {
-                            
-            var asyncEngineCreation = async function() {
-                try {
-                    return createDefaultEngine();
-                } catch(e) {
-                    console.log("the available createEngine function failed. Creating the default engine instead");
-                    return createDefaultEngine();
-                }
-            }
+window.initFunction = async function() {
+                    
+    var asyncEngineCreation = async function() {
+        try {
+            return createDefaultEngine();
+        } catch(e) {
+            console.log("the available createEngine function failed. Creating the default engine instead");
+            return createDefaultEngine();
+        }
+    }
 
-            window.engine = await asyncEngineCreation();
-            if (!engine) throw 'engine should not be null.';
-            startRenderLoop(engine, canvas);
-            window.scene = createScene();};
-            initFunction().then(() => {sceneToRender = scene                    
-        });
+    window.engine = await asyncEngineCreation();
+    if (!engine) throw 'engine should not be null.';
+    startRenderLoop(engine, canvas);
+    window.scene = createScene();};
+    initFunction().then(() => {sceneToRender = scene                    
+});
 
-        // Resize
-        window.addEventListener("resize", function () {
-            engine.resize();
-        });
+// Resize
+window.addEventListener("resize", function () {
+    engine.resize();
+});
 
 
     </script>
