@@ -5,12 +5,18 @@ Interactive Earth vs. flat earth comparision using babylon.js
 
 https://cienzorama.github.io/Earth_vs_flat_earth/
 
-## Last update [2023 08 27]
+## Last update [2023 09 11]
+
+- Multiple corrections and optimizations in local plane visualization option 
+- Corrected error in flat earth latitude for second observer
+- Corrected error on exit of location from map option
+
+## update [2023 08 27]
 
 - Added select location from map option
 - Added change flat earth position and size options
 - Added control to change observers altitude
-- Multiple corrections and optimization in eclipse calculations
+- Multiple corrections and optimizations in eclipse calculations
 - Error correction in glow effect
 
 ## Features
