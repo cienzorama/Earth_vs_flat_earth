@@ -191,7 +191,7 @@
 //|                                               |
 //|                                               |
 //|                                               |
-//| v0.50cb   24/08/2023                          |
+//| v0.52gi   17/09/2023                          |
 //|                                               |
 //|            cienzorama@gmail.com               |
 //|-----------------------------------------------|
@@ -346,6 +346,8 @@ orthodromic_angle=0;
 JD=2451545.0;
 FECHA=[];
 TIME_STEP=1;
+GMT_OFFSET_RED=2;
+GMT_OFFSET_BLUE=-3;
 
 //Líneas entre las ubicaciones, el centro
 // de La Tierra y la posición de La Luna
@@ -445,6 +447,10 @@ user_alt_2=29;user_az_2=43.87;
 user_alt_1_co=56;
 user_alt_2_co=29;
 
+user_ra=0;
+user_dec=0;
+usuario_mira_estrella=0;
+
 //Datos de las líneas de dirección de la
 //observación de usuario en la esfera
 // y la tierra plana
@@ -530,11 +536,11 @@ function obtiene_fecha_actual() {
 
     //Fecha y hora de prueba
     /*
-    fecha[0]=20;
-    fecha[1]=4;
+    fecha[0]=28;
+    fecha[1]=10;
     fecha[2]=2023;
-    fecha[3]=3;
-    fecha[4]=00;
+    fecha[3]=20;
+    fecha[4]=35;
     */
     
     return fecha;
@@ -692,7 +698,6 @@ function calc_gmst() {
     var j1=JD*1.0;
     var t1 = (j1 -2451545.0)/36525.0; 
 
-    //var fecha1=FECHA.slice();
     var fecha1=calc_fecha(JD);
     var hh=fecha1[3]*1.0;
     var mm=fecha1[4]*1.0;
@@ -1035,7 +1040,6 @@ function calc_moon_pos() {
 
     lonecl_p=Lprime+(dlon/(1e6))*dtor;
     latecl_p=(dlat/(1e6))*dtor;
-    //r_p=(385000.56+drad/(1e3))/149597870.691;
     r_p=(385000.56+drad/(1e3))/6371.0;
 
     var ss=10;
@@ -1089,8 +1093,7 @@ function calc_moon_pos_old() {
 
     ecl=ecl*dtor;
 
-    //Elementos oscultantes de la órbita
-    //de La Tierra
+    //Elementos oscultantes de la órbita de La Tierra
     var N_s=0;
     var i_s=0;
     var w_s=180+282.9404 + 4.70935E-5 * d2k;
@@ -1103,8 +1106,7 @@ function calc_moon_pos_old() {
     var w_s=w_s*dtor;
     var M_s=M_s*dtor;
 
-    //Elementos oscultatnes de la órbita
-    //de La Luna
+    //Elementos oscultatnes de la órbita de La Luna
     var N_p=125.1228 - 0.0529538083 * d2k;
     var i_p=5.1454;
     var w_p=318.0634 + 0.1643573223 * d2k;
@@ -1848,10 +1850,48 @@ var calculate_lines=function() {
     qtheta = Math.atan2(qy, qx);
     moon_bear2 = (qtheta*180/Math.PI + 360) % 360;
 
+    //Los usuarios oservan la misma estrella 
+    if (usuario_mira_estrella==1) {
+
+        var GMST_0=calc_gmst();
+        var LST_1=GMST_0+lon1;
+        var LST_2=GMST_0+lon2;
+        var HA_1=LST_1-user_ra/24*2*Math.PI;
+        var HA_2=LST_2-user_ra/24*2*Math.PI;
+
+        var xus1=Math.cos(HA_1)*Math.cos(user_dec*dtor);
+        var yus1=Math.sin(HA_1)*Math.cos(user_dec*dtor);
+        var zus1=Math.sin(user_dec*dtor);
+
+        var xhor1=xus1*Math.sin(lat1)-zus1*Math.cos(lat1);
+        var yhor1=yus1;
+        var zhor1=xus1*Math.cos(lat1)+zus1*Math.sin(lat1);
+
+        user_az_1=(Math.atan2(yhor1,xhor1)+Math.PI)/dtor;
+        user_alt_1=Math.asin(zhor1)/dtor;
+        user_alt_1_co=user_alt_1*1.0;
+
+        var xus2=Math.cos(HA_2)*Math.cos(user_dec*dtor);
+        var yus2=Math.sin(HA_2)*Math.cos(user_dec*dtor);
+        var zus2=Math.sin(user_dec*dtor);
+
+        var xhor2=xus2*Math.sin(lat2)-zus2*Math.cos(lat2);
+        var yhor2=yus2;
+        var zhor2=xus2*Math.cos(lat2)+zus2*Math.sin(lat2);
+
+        user_az_2=(Math.atan2(yhor2,xhor2)+Math.PI)/dtor;
+        user_alt_2=Math.asin(zhor2)/dtor;
+        user_alt_2_co=user_alt_2*1.0;
+
+        //console.log(user_alt_1,user_az_1);
+        //console.log(user_alt_2,user_az_2);
+
+    }
+
+
     //Cálculo de las líneas de observación de usuario
     //sobre la esfera
     //-------------------------------------------------
-
     var user1=local_altaz_to_xyz(ori_un1,ori_ue1,ori_ur1,user_alt_1,user_az_1,0);
     user1.normalize();
     user1.scaleInPlace(user_line_size);
@@ -2253,8 +2293,6 @@ var calculate_lines=function() {
         
         var r_escala=0.5;
         for (var k=0;k<4;k++) {
-
-            
 
             if (k==0) {
 
@@ -2894,34 +2932,19 @@ var createScene =  function () {
     var camera_moon_1=new BABYLON.TargetCamera("Camera moon 1", 0, 0, 10, zero, scene);
     var camera_moon_2=new BABYLON.TargetCamera("Camera moon 2", 0, 0, 10, zero, scene);
 
-    //Camaras activas, la última en definirse
-    //tiene el control del movimiento del ratón
-    scene.activeCameras=[];
-    scene.activeCameras.push(camera_moon_1);
-    scene.activeCameras.push(camera_moon_2);
     scene.activeCameras.push(camera);
 
-    //Tamaño del viewport
-    //según posición en la esquina
-    //superior derecha
-    if ( moon_cameras_option==1) {
-        var vps=0.15;
-    } else {
-        var vps=0.15/1000;
-    }
-
     camera.viewport = new BABYLON.Viewport(0.0, 0.0, 1.0, 1.0);
-    camera_moon_1.viewport=new BABYLON.Viewport(1-vps, 1-vps, vps, vps);
-    camera_moon_2.viewport=new BABYLON.Viewport(1-vps, 1-2*vps, vps, vps);
-
+    camera_moon_1.viewport = new BABYLON.Viewport(0.0, 0.0, 1.0, 1.0);
+    camera_moon_2.viewport = new BABYLON.Viewport(0.0, 0.0, 1.0, 1.0);    
     
     //Máscaras de cámara para
     //evitar que el GUI se represente
     //en los viewports de las cámaras 
     //adicionales
     camera.layerMask =       0x10000001;
-    camera_moon_1.layerMask= 0x00000010;
-    camera_moon_2.layerMask= 0x00000100;
+    //camera_moon_1.layerMask= 0x00000010;
+    //camera_moon_2.layerMask= 0x00000100;
     
     //Campo visual de las cámaras adicionales
     //Típicamente el doble del tamaño de La Luna (~1º)
@@ -3022,20 +3045,14 @@ var createScene =  function () {
 
     //Textura y material de La Tierra
     //Baja resolución
-    //var url_em="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Whole_world_-_land_and_oceans.jpg/1024px-Whole_world_-_land_and_oceans.jpg";
+    //var url_em="images/1024px-Whole_world_-_land_and_oceans.jpg";
     //Media resolución
-    var url_em="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Whole_world_-_land_and_oceans.jpg/2560px-Whole_world_-_land_and_oceans.jpg";
+    var url_em="images/2560px-Whole_world_-_land_and_oceans.jpg";
     
-    //var url_em="https://upload.wikimedia.org/wikipedia/commons/a/ac/World-airline-routemap-2009.png";
-    //var url_em="https://raw.githubusercontent.com/cienzorama/resources/c53a2f5ea5c69887ddcee0ad9b781729ff0017a8/orthodromic_plus/airline_01_routes.png";
-    //var url_em="https://raw.githubusercontent.com/cienzorama/resources/d5b7fdf8a418727aabb303e62d7299c26c27df1b/orthodromic_plus/airliners_map_02.png";
-
-    //var url_em="https://raw.githubusercontent.com/cienzorama/resources/d3c88b311d58bbb90e1905648b2bd78e4e9a6c21/orthodromic_plus/Shipping_routes_red_black.png";
-
     var EarthMat = new BABYLON.StandardMaterial("earth", scene);
     EarthMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
     //EarthMat.emissiveColor = BABYLON.Color3.White();
-    EarthMat.emissiveColor = new BABYLON.Color3(0.5,0.5,0.5);
+    EarthMat.emissiveColor = new BABYLON.Color3(0.45,0.45,0.45);
     EarthMat.backFaceCulling = true;
     EarthMat.diffuseTexture = new BABYLON.Texture(url_em, scene);
     EarthMat.diffuseTexture.uScale=-1;
@@ -3044,7 +3061,7 @@ var createScene =  function () {
     EarthMat.useLogarithmicDepth = true;
     
     //Textura y material de la tierra plana
-    var url_fem="https://upload.wikimedia.org/wikipedia/commons/7/79/Flat_earth.jpg";
+    var url_fem="images/Flat_earth.jpg";
     FlatEarthMat=new BABYLON.StandardMaterial("Flatearth", scene);
     FlatEarthMat.diffuseTexture = new BABYLON.Texture(url_fem, scene);
     FlatEarthMat.specularColor = new BABYLON.Color3(0,0,0);
@@ -3070,7 +3087,7 @@ var createScene =  function () {
     //EarthMat.emissiveColor = BABYLON.Color3.White();
     //EarthMat.emissiveColor = new BABYLON.Color3(0.5,0.5,0.5);
     MoonMat.backFaceCulling = true;
-    var url_moon_map="https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Moon_texture.jpg/1024px-Moon_texture.jpg";
+    var url_moon_map="images/1024px-Moon_texture.jpg";
     MoonMat.diffuseTexture = new BABYLON.Texture(url_moon_map, scene);
     MoonMat.diffuseTexture.uScale=-1;
     MoonMat.diffuseTexture.vScale=-1;
@@ -3387,7 +3404,6 @@ var createScene =  function () {
 
     var sunArrowMat = new BABYLON.StandardMaterial("sun arrow", scene);
     sunArrowMat.diffuseColor = line_color_sun;
-    //sunArrowMat.specularColor = new BABYLON.Color3(0,0,0);//line_color_sun;
     sunArrowMat.ambientColor = new BABYLON.Color3(1,1,1);
     sunArrowMat.emissiveColor = line_color_sun;
     sunArrowMat.useLogarithmicDepth=true;
@@ -3395,7 +3411,6 @@ var createScene =  function () {
 
     var moonArrowMat = new BABYLON.StandardMaterial("moon arrow", scene);
     moonArrowMat.diffuseColor = line_color_moon;
-    //moonArrowMat.specularColor = new BABYLON.Color3(0,0,0);//line_color_moon;
     moonArrowMat.ambientColor = new BABYLON.Color3(0,0,0);
     moonArrowMat.emissiveColor = line_color_moon;
     moonArrowMat.useLogarithmicDepth=true;
@@ -3418,7 +3433,6 @@ var createScene =  function () {
             sideOrientation: BABYLON.Mesh.DOUBLESIDE
         }, 
     scene);
-    //fe_sun_arrow_1.material=redArrowMat;
     fe_sun_arrow_1.material=sunArrowMat;
     fe_sun_arrow_1.isVisible=sun_tp_visible;
     
@@ -3431,7 +3445,6 @@ var createScene =  function () {
             sideOrientation: BABYLON.Mesh.DOUBLESIDE
         }, 
     scene);
-    //fe_sun_arrow_2.material=blueArrowMat;
     fe_sun_arrow_2.material=sunArrowMat;
     fe_sun_arrow_2.isVisible=sun_tp_visible;
     //
@@ -3446,7 +3459,6 @@ var createScene =  function () {
             sideOrientation: BABYLON.Mesh.DOUBLESIDE
         }, 
     scene);
-    //fe_moon_arrow_1.material=redArrowMat;
     fe_moon_arrow_1.material=moonArrowMat;
     fe_moon_arrow_1.isVisible=moon_tp_visible;
     
@@ -3459,7 +3471,6 @@ var createScene =  function () {
             sideOrientation: BABYLON.Mesh.DOUBLESIDE
         }, 
     scene);
-    //fe_moon_arrow_2.material=blueArrowMat;
     fe_moon_arrow_2.material=moonArrowMat;
     fe_moon_arrow_2.isVisible=moon_tp_visible;
     //
@@ -3524,8 +3535,6 @@ var createScene =  function () {
 
     var shadowEarthMat = new BABYLON.StandardMaterial("Shadow Earth", scene);
     shadowEarthMat.diffuseColor = new BABYLON.Color3(1,0.1,0.1);
-    //shadowEarthMat.specularColor = new BABYLON.Color3(0.1,0.1,0.1);
-    //shadowEarthMat.emissiveColor = new BABYLON.Color3(0.1,0.1,0.1);
     shadowEarthMat.alpha=0.8;
     shadowEarthMat.useLogarithmicDepth = true;
 
@@ -3537,16 +3546,15 @@ var createScene =  function () {
             cap: 1
         }, 
     scene);
-    //fe_sun_arrow_1.material=redArrowMat;
     shadowEarth.material=shadowEarthMat;
     shadowEarth.layerMask= 0x10000000;
     light.excludedMeshes.push(shadowEarth);
 
+
     var shadowEarthMat2 = new BABYLON.StandardMaterial("Shadow Earth", scene);
     shadowEarthMat2.diffuseColor = new BABYLON.Color3(1,0.1,0.1);
-    //shadowEarthMat.specularColor = new BABYLON.Color3(0.1,0.1,0.1);
-    //shadowEarthMat.emissiveColor = new BABYLON.Color3(0.1,0.1,0.1);
-    shadowEarthMat2.alpha=0.5;
+    shadowEarthMat2.alpha=0.33;
+    shadowEarthMat2.useLogarithmicDepth = true;
 
     //Sombra de la Tierra 
     shadowEarth2 = BABYLON.MeshBuilder.CreateTube(
@@ -3556,7 +3564,6 @@ var createScene =  function () {
             cap: 1
         }, 
     scene);
-    //fe_sun_arrow_1.material=redArrowMat;
     shadowEarth2.material=shadowEarthMat2;
     shadowEarth2.layerMask= 0x1000000;
     light.excludedMeshes.push(shadowEarth2);
@@ -3655,7 +3662,6 @@ var createScene =  function () {
 
     //--------------------------------------------------------
     
-
     //Efecto neón para las líneas
     var glo = new BABYLON.GlowLayer("glow_effect", scene, {
         blurKernelSize: 30
@@ -3831,51 +3837,78 @@ var createScene =  function () {
     light3.excludedMeshes.push(SunSphere);
     light3.intensity=4;
 
-    
+    var rt_moon1 = new BABYLON.RenderTargetTexture("render texture moon 1", 256, scene, false, false);
+    scene.customRenderTargets.push(rt_moon1);
+	rt_moon1.activeCamera = camera_moon_1;
+    rt_moon1.renderList = scene.meshes;
+        
+    var pip_moon1_mat = new BABYLON.StandardMaterial("texturePlane", scene);
+    pip_moon1_mat.specularColor=new BABYLON.Color3(0,0,0);
+    pip_moon1_mat.diffuseColor=new BABYLON.Color3(0,0,0);
+    pip_moon1_mat.emissiveTexture = rt_moon1;
+    pip_moon1_mat.useLogarithmicDepth=true;
+
+    var pip_moon1 = BABYLON.Mesh.CreatePlane("plane", 1, scene);
+    pip_moon1.position = new BABYLON.Vector3(3.065, 1.165, 4);
+    pip_moon1.parent = camera;
+    pip_moon1.material = pip_moon1_mat;
+    pip_moon1.isVisible=0;
+
+    var pip_red_mat = new BABYLON.StandardMaterial("texturePlane", scene);
+    pip_red_mat.specularColor=new BABYLON.Color3(0,0,0);
+    pip_red_mat.diffuseColor=new BABYLON.Color3(0,0,0);
+    pip_red_mat.emissiveColor=new BABYLON.Color3(0.5,0.0,0.0);
+    pip_red_mat.useLogarithmicDepth=true;
+
+    var pip_red = BABYLON.Mesh.CreatePlane("plane", 1.1, scene);
+    pip_red.position = new BABYLON.Vector3(3.1, 1.2, 4.01);
+    pip_red.parent = camera;
+    pip_red.material = pip_red_mat;
+    pip_red.isVisible=0;
+
+    var rt_moon2 = new BABYLON.RenderTargetTexture("render texture moon 2", 256, scene, false, false);
+    scene.customRenderTargets.push(rt_moon2);
+	rt_moon2.activeCamera = camera_moon_2;
+    rt_moon2.renderList = scene.meshes;
+        
+    var pip_moon2_mat = new BABYLON.StandardMaterial("texturePlane", scene);
+    pip_moon2_mat.specularColor=new BABYLON.Color3(0,0,0);
+    pip_moon2_mat.diffuseColor=new BABYLON.Color3(0,0,0);
+    pip_moon2_mat.emissiveTexture = rt_moon2;
+    pip_moon2_mat.useLogarithmicDepth=true;
+
+    var pip_moon2 = BABYLON.Mesh.CreatePlane("plane", 1, scene);
+    pip_moon2.position = new BABYLON.Vector3(3.065-0.055, 1.165-1.07, 3.925);
+    pip_moon2.parent = camera;
+    pip_moon2.material = pip_moon2_mat;
+    pip_moon2.isVisible=0;
+
+    var pip_blue_mat = new BABYLON.StandardMaterial("texturePlane", scene);
+    pip_blue_mat.specularColor=new BABYLON.Color3(0,0,0);
+    pip_blue_mat.diffuseColor=new BABYLON.Color3(0,0,0);
+    pip_blue_mat.emissiveColor=new BABYLON.Color3(0.0,0.0,0.5);
+    pip_blue_mat.useLogarithmicDepth=true;
+
+    var pip_blue = BABYLON.Mesh.CreatePlane("plane", 1.1, scene);
+    pip_blue.scaling.y=0.97;
+    pip_blue.position = new BABYLON.Vector3(3.1, 1.2-1.1, 4.01);
+    pip_blue.parent = camera;
+    pip_blue.material = pip_blue_mat;
+    pip_blue.isVisible=0;
+
+
     //GUI--------------------------------------------------------
 
     var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-	var advancedTexture1 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-	var advancedTexture2 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+	//var advancedTexture1 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+	//var advancedTexture2 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 	
     advancedTexture.layer.layerMask=camera.layerMask;
-    advancedTexture1.layer.layerMask=camera_moon_1.layerMask;
-    advancedTexture2.layer.layerMask=camera_moon_2.layerMask;
+    //advancedTexture1.layer.layerMask=camera_moon_1.layerMask;
+    //advancedTexture2.layer.layerMask=camera_moon_2.layerMask;
     
     var al_left=BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     var al_top=BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-
-    //Marca roja del viewport de La Luna
-    var vpm1_rect = new BABYLON.GUI.Rectangle();
-    vpm1_rect.width = "100%";
-    vpm1_rect.height = "100%";
-    vpm1_rect.cornerRadius = 1;
-    vpm1_rect.color = "red";
-    vpm1_rect.thickness = 4;
-    vpm1_rect.background = "red";
-    vpm1_rect.top="0%";
-    vpm1_rect.left="0%";
-    vpm1_rect.horizontalAlignment = al_left;
-    vpm1_rect.verticalAlignment = al_top;
-    vpm1_rect.isVisible=1;
-    vpm1_rect.alpha=0.2;	
-    advancedTexture1.addControl(vpm1_rect);
-
-    //Marca azul del viewport de La Luna
-    var vpm2_rect = new BABYLON.GUI.Rectangle();
-    vpm2_rect.width = "100%";
-    vpm2_rect.height = "100%";
-    vpm2_rect.cornerRadius = 1;
-    vpm2_rect.color = "blue";
-    vpm2_rect.thickness = 4;
-    vpm2_rect.background = "blue";
-    vpm2_rect.top="0%";
-    vpm2_rect.left="0%";
-    vpm2_rect.horizontalAlignment = al_left;
-    vpm2_rect.verticalAlignment = al_top;
-    vpm2_rect.isVisible=1;
-    vpm2_rect.alpha=0.2;		
-    advancedTexture2.addControl(vpm2_rect);
 
     //Panel inferior
     //Cuadro de datos
@@ -4771,19 +4804,19 @@ var createScene =  function () {
        
         if (current_earth_texture==1) {
             map_text.text="MAP\n"+"DEFAULT";
-            url_em="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Whole_world_-_land_and_oceans.jpg/2560px-Whole_world_-_land_and_oceans.jpg";
+            url_em="images/2560px-Whole_world_-_land_and_oceans.jpg";
         }
         if (current_earth_texture==2) {
             map_text.text="MAP\n"+"AIRLINES";
-            url_em="https://raw.githubusercontent.com/cienzorama/resources/d5b7fdf8a418727aabb303e62d7299c26c27df1b/orthodromic_plus/airliners_map_02.png";
+            url_em="images/airliners_map_02.png";
         }
         if (current_earth_texture==3) {
             map_text.text="MAP\n"+"SHIPPING";
-            url_em="https://raw.githubusercontent.com/cienzorama/resources/d3c88b311d58bbb90e1905648b2bd78e4e9a6c21/orthodromic_plus/Shipping_routes_red_black.png";
+            url_em="images/Shipping_routes_red_black.png";
         }
         if (current_earth_texture==4) {
             map_text.text="MAP\n"+"ECLIPSES";
-            url_em="https://raw.githubusercontent.com/cienzorama/resources/edefc2a8104e02859fbcc36c74e0b19411316a4a/orthodromic_plus/earth_ecl_03.jpg";
+            url_em="images/earth_ecl_03.jpg";
         }
 
         EarthMat.diffuseTexture = new BABYLON.Texture(url_em, scene);
@@ -4815,19 +4848,19 @@ var createScene =  function () {
        
         if (current_earth_texture==1) {
             map_text.text="MAP\n"+"DEFAULT";
-            url_em="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Whole_world_-_land_and_oceans.jpg/2560px-Whole_world_-_land_and_oceans.jpg";
+            url_em="images/2560px-Whole_world_-_land_and_oceans.jpg";
         }
         if (current_earth_texture==2) {
             map_text.text="MAP\n"+"AIRLINES";
-            url_em="https://raw.githubusercontent.com/cienzorama/resources/d5b7fdf8a418727aabb303e62d7299c26c27df1b/orthodromic_plus/airliners_map_02.png";
+            url_em="images/airliners_map_02.png";
         }
         if (current_earth_texture==3) {
             map_text.text="MAP\n"+"SHIPPING";
-            url_em="https://raw.githubusercontent.com/cienzorama/resources/d3c88b311d58bbb90e1905648b2bd78e4e9a6c21/orthodromic_plus/Shipping_routes_red_black.png";
+            url_em="images/Shipping_routes_red_black.png";
         }
         if (current_earth_texture==4) {
             map_text.text="MAP\n"+"ECLPSES";
-            url_em="https://raw.githubusercontent.com/cienzorama/resources/edefc2a8104e02859fbcc36c74e0b19411316a4a/orthodromic_plus/earth_ecl_03.jpg";
+            url_em="images/earth_ecl_03.jpg";
         }
 
         EarthMat.diffuseTexture = new BABYLON.Texture(url_em, scene);
@@ -4876,7 +4909,6 @@ var createScene =  function () {
     });
     opts_rect.addControl(glow_slider);
 
-
     //Control del intensidad del efecto neón
     fe_scale_slider = new BABYLON.GUI.Slider();
     fe_scale_slider.minimum = 1;
@@ -4918,7 +4950,6 @@ var createScene =  function () {
     });
     opts_rect.addControl(fe_scale_slider);
 
-
     //Control del intensidad del efecto neón
     fe_angle_slider = new BABYLON.GUI.Slider();
     fe_angle_slider.minimum = 0;
@@ -4955,8 +4986,6 @@ var createScene =  function () {
         
     });
     opts_rect.addControl(fe_angle_slider);
-
-
 
     //Control de la sensibilidad del ratón
     //al mover las posiciones
@@ -4997,18 +5026,20 @@ var createScene =  function () {
 
         if (moon_cameras_option==1) {
 
-            var vps=0.15/100.0;
-            camera_moon_1.viewport=new BABYLON.Viewport(1-vps, 1-vps, vps, vps);
-            camera_moon_2.viewport=new BABYLON.Viewport(1-vps, 1-2*vps, vps, vps);
+            pip_moon1.isVisible=0;
+            pip_moon2.isVisible=0;
+            pip_red.isVisible=0;
+            pip_blue.isVisible=0;
 
             moon_cameras_option=0;
             vpt_btn.background="red";
 
         } else {
 
-            var vps=0.15;
-            camera_moon_1.viewport=new BABYLON.Viewport(1-vps, 1-vps, vps, vps);
-            camera_moon_2.viewport=new BABYLON.Viewport(1-vps, 1-2*vps, vps, vps);
+            pip_moon1.isVisible=1;
+            pip_moon2.isVisible=1;
+            pip_red.isVisible=1;
+            pip_blue.isVisible=1;
 
             moon_cameras_option=1;
             vpt_btn.background="green";
@@ -5084,7 +5115,7 @@ var createScene =  function () {
 
     //Cuadro de fecha
     var date_rect = new BABYLON.GUI.Rectangle();
-    date_rect.width = "340px";
+    date_rect.width = "380px";
     date_rect.height = "155px";
     date_rect.cornerRadius = 10;
     date_rect.color = "white";
@@ -5119,14 +5150,106 @@ var createScene =  function () {
     var sep01 = new BABYLON.GUI.Line();
 	sep01.x1 = 0;
 	sep01.y1 = 62;
-	sep01.x2 = 340;
+	sep01.x2 = 380;
 	sep01.y2 = 62;
     sep01.color="white";
     date_rect.addControl(sep01);
 
+    var sep02 = new BABYLON.GUI.Line();
+	sep02.x1 = 302;
+	sep02.y1 = 0;
+	sep02.x2 = 302;
+	sep02.y2 = 62;
+    sep02.color="gray";
+    date_rect.addControl(sep02);
+
+    //Offset GMT para la posición roja
+    var gmt_offset_red_text = BABYLON.GUI.Button.CreateSimpleButton("GMT OFFSET RED","");
+    gmt_offset_red_text.height="22px"
+    gmt_offset_red_text.width="75px"
+
+    var gor=FECHA[3]+GMT_OFFSET_RED;
+    if (gor>24) gor-=24; if (gor<0) gor+=24; if (gor==24) gor=0;
+    gmt_offset_red_text.textBlock.text=gor.toString().padStart(2,"0")+":"+
+                                       (FECHA[4]).toString().padStart(2,"0")+":"+
+                                       (FECHA[5]).toString().padStart(2,"0");
+
+    gmt_offset_red_text.color = "white";
+    gmt_offset_red_text.background="red";
+    gmt_offset_red_text.fontSize = 14;
+    gmt_offset_red_text.top=5;
+    gmt_offset_red_text.left=305;
+    gmt_offset_red_text.thickness = 0;
+    gmt_offset_red_text.horizontalAlignment = al_left;
+    gmt_offset_red_text.verticalAlignment  = al_top;
+    gmt_offset_red_text.textHorizontalAlignment = al_left;		
+    gmt_offset_red_text.textVerticalAlignment = al_top;		
+    gmt_offset_red_text.fontFamily = 'monospace';
+    gmt_offset_red_text.onWheelObservable.add(function(evt) {
+
+        if (evt.y<0) {GMT_OFFSET_RED++;} else {GMT_OFFSET_RED--;}
+        if (GMT_OFFSET_RED>12) GMT_OFFSET_RED=12;
+        if (GMT_OFFSET_RED<-12) GMT_OFFSET_RED=-12;
+
+        gmts_offset();
+
+    });	
+    date_rect.addControl(gmt_offset_red_text);
+
+
+    //Offset GMT para la posición azul
+    var gmt_offset_blue_text = BABYLON.GUI.Button.CreateSimpleButton("GMT OFFSET BLUE","");
+    gmt_offset_blue_text.height="22px"
+    gmt_offset_blue_text.width="75px"
+
+    var gob=FECHA[3]+GMT_OFFSET_BLUE;
+    if (gob>24) gob-=24; if (gob<0) gob+=24; if (gob==24) gob=0;
+    gmt_offset_blue_text.textBlock.text=gob.toString().padStart(2,"0")+":"+
+                                       (FECHA[4]).toString().padStart(2,"0")+":"+
+                                       (FECHA[5]).toString().padStart(2,"0");
+
+    gmt_offset_blue_text.color = "white";
+    gmt_offset_blue_text.background="blue";
+    gmt_offset_blue_text.fontSize = 14;
+    gmt_offset_blue_text.top=35;
+    gmt_offset_blue_text.left=305;
+    gmt_offset_blue_text.thickness = 0;
+    gmt_offset_blue_text.horizontalAlignment = al_left;
+    gmt_offset_blue_text.verticalAlignment  = al_top;
+    gmt_offset_blue_text.textHorizontalAlignment = al_left;		
+    gmt_offset_blue_text.textVerticalAlignment = al_top;		
+    gmt_offset_blue_text.fontFamily = 'monospace';
+    gmt_offset_blue_text.onWheelObservable.add(function(evt) {
+
+        if (evt.y<0) {GMT_OFFSET_BLUE++;} else {GMT_OFFSET_BLUE--;}
+        if (GMT_OFFSET_BLUE>12) GMT_OFFSET_BLUE=12;
+        if (GMT_OFFSET_BLUE<-12) GMT_OFFSET_BLUE=-12;
+
+        gmts_offset();
+
+    });	
+    date_rect.addControl(gmt_offset_blue_text);
+
+    function gmts_offset() {
+
+        var gob=FECHA[3]+GMT_OFFSET_BLUE;
+        if (gob>24) gob-=24; if (gob<0) gob+=24; if (gob==24) gob=0;
+        gmt_offset_blue_text.textBlock.text=gob.toString().padStart(2,"0")+":"+
+                                        (FECHA[4]).toString().padStart(2,"0")+":"+
+                                        (FECHA[5]).toString().padStart(2,"0");
+
+        var gor=FECHA[3]+GMT_OFFSET_RED;
+        if (gor>24) gor-=24; if (gor<0) gor+=24; if (gor==24) gor=0;
+        gmt_offset_red_text.textBlock.text=gor.toString().padStart(2,"0")+":"+
+                                        (FECHA[4]).toString().padStart(2,"0")+":"+
+                                        (FECHA[5]).toString().padStart(2,"0");
+
+    }
+
+
     //Cuadro de localización
     var loca_rect = new BABYLON.GUI.Rectangle();
-    loca_rect.width = "340px";
+    loca_rect.width = "380px";
     loca_rect.height = "90px";
     loca_rect.cornerRadius = 10;
     loca_rect.color = "white";
@@ -5138,7 +5261,6 @@ var createScene =  function () {
     loca_rect.verticalAlignment = al_top;
     loca_rect.alpha=1;
     loca_rect.isVisible=1;		
-    //panelI_rect.addControl(loca_rect);
     date_rect.addControl(loca_rect);
 
     //Control de ocultación del cuadro de tiempo
@@ -5226,7 +5348,10 @@ var createScene =  function () {
         minu_btn.textBlock.text=FECHA[4].toString().padStart(2,"0")+":";
         segu_btn.textBlock.text=FECHA[5].toString().padStart(2,"0");
 
+        gmts_offset();
+
         update_all();
+
 	});	
     date_rect.addControl(now_btn);
 
@@ -5289,6 +5414,7 @@ var createScene =  function () {
         if (step_day_val>99) step_day_val=99;
         if (step_day_val<0) step_day_val=0;
         step_day_btn.textBlock.text=step_day_val.toString().padStart(2,"0");
+
 	});	
     date_rect.addControl(step_day_btn);
 
@@ -5313,6 +5439,7 @@ var createScene =  function () {
         if (step_hour_val<0) step_hour_val+=24;
         if (step_hour_val>23) step_hour_val-=24;
         step_hour_btn.textBlock.text=step_hour_val.toString().padStart(2,"0")+':';
+
 	});	
     date_rect.addControl(step_hour_btn);
 
@@ -5337,6 +5464,7 @@ var createScene =  function () {
         if (step_min_val<0) step_min_val+=60;
         if (step_min_val>59) step_min_val-=60;
         step_min_btn.textBlock.text=step_min_val.toString().padStart(2,"0")+':';
+
 	});	
     date_rect.addControl(step_min_btn);
 
@@ -5361,6 +5489,7 @@ var createScene =  function () {
         if (step_seg_val<0) step_seg_val+=60;
         if (step_seg_val>59) step_seg_val-=60;
         step_seg_btn.textBlock.text=step_seg_val.toString().padStart(2,"0");
+
 	});	
     date_rect.addControl(step_seg_btn);
 
@@ -5395,6 +5524,7 @@ var createScene =  function () {
         segu_btn.textBlock.text=FECHA[5].toString().padStart(2,"0");
 
         update_all();
+
 	});	
     date_rect.addControl(step_int_btn);
 
@@ -5489,7 +5619,9 @@ var createScene =  function () {
         minu_btn.textBlock.text=FECHA[4].toString().padStart(2,"0")+":";
         segu_btn.textBlock.text=FECHA[5].toString().padStart(2,"0");
 
+        gmts_offset();
         update_all();
+
 	});	
     date_rect.addControl(day_btn);
 
@@ -5534,7 +5666,9 @@ var createScene =  function () {
         minu_btn.textBlock.text=FECHA[4].toString().padStart(2,"0")+":";
         segu_btn.textBlock.text=FECHA[5].toString().padStart(2,"0");
 
+        gmts_offset();
         update_all();        
+
 	});	
     date_rect.addControl(month_btn);
 
@@ -5573,6 +5707,7 @@ var createScene =  function () {
         minu_btn.textBlock.text=FECHA[4].toString().padStart(2,"0")+":";
         segu_btn.textBlock.text=FECHA[5].toString().padStart(2,"0");
 
+        gmts_offset();
         update_all();
 
 	});	
@@ -5610,6 +5745,7 @@ var createScene =  function () {
         minu_btn.textBlock.text=FECHA[4].toString().padStart(2,"0")+":";
         segu_btn.textBlock.text=FECHA[5].toString().padStart(2,"0");
 
+        gmts_offset();
         update_all();
 
 	});	
@@ -5645,7 +5781,9 @@ var createScene =  function () {
         minu_btn.textBlock.text=FECHA[4].toString().padStart(2,"0")+":";
         segu_btn.textBlock.text=FECHA[5].toString().padStart(2,"0");
 
+        gmts_offset();
         update_all();
+
 	});	
     date_rect.addControl(minu_btn);
 
@@ -5680,7 +5818,9 @@ var createScene =  function () {
         minu_btn.textBlock.text=FECHA[4].toString().padStart(2,"0")+":";
         segu_btn.textBlock.text=FECHA[5].toString().padStart(2,"0");
 
+        gmts_offset();
         update_all();
+
 	});	
     date_rect.addControl(segu_btn);
     //------Contenido del tab de opciones---------
@@ -5689,7 +5829,7 @@ var createScene =  function () {
 
      //Texto del cuadro de ubicación (ajuste fino)
     var loca_text = new BABYLON.GUI.TextBlock();
-    loca_text.text="   LATITUDE  LONGITUDE    HEIGHT  BEARING";
+    loca_text.text="   LATITUDE    LONGITUDE     HEIGHT    BEARING";
     loca_text.color = "white";
     loca_text.fontSize = 14;
     loca_text.top="5px";
@@ -5704,16 +5844,17 @@ var createScene =  function () {
 
     //--------------ROJA------------------------
 
+    var red_loc_top="30px";
+	var loc_left=20;
+
     var alat1=Math.abs(lat1);
     var slat1="+";
     if (lat1<0) slat1="-";
-
-    var red_loc_top="30px";
-	 var loc_left=20;
+    var tlat1=slat1+(alat1/dtor).toFixed(2).padStart(5,'0');
 
     //Ajuste fino de la latitud de la esfera roja (parte entera)
     var lat1_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("lat1 int","");
-    lat1_pe_btn.textBlock.text=slat1+Math.floor(alat1/dtor).toString().padStart(2,"0")+".";
+    lat1_pe_btn.textBlock.text=tlat1.substring(0,4);
     lat1_pe_btn.width="40px";
     lat1_pe_btn.height="20px";
     lat1_pe_btn.fontSize = 20;
@@ -5738,9 +5879,9 @@ var createScene =  function () {
         var alat1=Math.abs(lat1);
         var slat1="+";
         if (lat1<0) slat1="-";
-
-        lat1_pe_btn.textBlock.text=slat1+Math.floor(alat1/dtor).toString().padStart(2,"0")+".";
-        lat1_pd_btn.textBlock.text=(Math.floor(100*(alat1/dtor-Math.floor(alat1/dtor)))).toString().padStart(2,"0")+"º";
+        var tlat1=slat1+(alat1/dtor).toFixed(2).padStart(5,'0');
+        lat1_pe_btn.textBlock.text=tlat1.substring(0,4);
+        lat1_pd_btn.textBlock.text=tlat1.substring(4,6)+"º";
 
         pos1=rlatlon_to_xyz(r,lat1,lon1,h1);
         redSphere.position=pos1;
@@ -5800,7 +5941,7 @@ var createScene =  function () {
 
     //Ajuste fino de la latitud de la esfera roja (parte decimal)
     var lat1_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("lat1 dec","");
-    lat1_pd_btn.textBlock.text=(Math.floor(100*(alat1/dtor-Math.floor(alat1/dtor)))).toString().padStart(2,"0")+"º";
+    lat1_pd_btn.textBlock.text=tlat1.substring(4,6)+"º";
     lat1_pd_btn.width="35px";
     lat1_pd_btn.height="20px";
     lat1_pd_btn.fontSize = 20;
@@ -5819,20 +5960,17 @@ var createScene =  function () {
         var val;
         if (evt.y<0) {val=1;} else {val=-1}
 
-        if (lat1>0) {
-            lat1=lat1+0.01*val*dtor;
-        } else {
-            lat1=lat1-0.01*val*dtor;
-        }
+        lat1+=0.01*val*dtor;
+
         if (lat1>max_lat*Math.PI/2.0) lat1=max_lat*Math.PI/2.0;
         if (lat1<-max_lat*Math.PI/2.0) lat1=-max_lat*Math.PI/2.0;
 
         var alat1=Math.abs(lat1);
         var slat1="+";
         if (lat1<0) slat1="-";
-
-        lat1_pe_btn.textBlock.text=slat1+Math.floor(alat1/dtor).toString().padStart(2,"0")+".";
-        lat1_pd_btn.textBlock.text=(Math.floor(100*(alat1/dtor-Math.floor(alat1/dtor)))).toString().padStart(2,"0")+"º";
+        var tlat1=slat1+(alat1/dtor).toFixed(2).padStart(5,'0');
+        lat1_pe_btn.textBlock.text=tlat1.substring(0,4);
+        lat1_pd_btn.textBlock.text=tlat1.substring(4,6)+"º";
 
         pos1=rlatlon_to_xyz(r,lat1,lon1,h1);
         redSphere.position=pos1;
@@ -5843,13 +5981,15 @@ var createScene =  function () {
 	});	
     loca_rect.addControl(lat1_pd_btn);
 
+
     var alon1=Math.abs(lon1);
     var slon1="+";
     if (lon1<0) slon1="-";
+    var tlon1=slon1+(alon1/dtor).toFixed(2).padStart(6,'0');
 
     //Ajuste fino de la longitud de la esfera roja (parte entera)
     var lon1_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("lon1 int","");
-    lon1_pe_btn.textBlock.text=slon1+Math.floor(alon1/dtor).toString().padStart(3,"0")+".";
+    lon1_pe_btn.textBlock.text=tlon1.substring(0,5);
     lon1_pe_btn.width="50px";
     lon1_pe_btn.height="20px";
     lon1_pe_btn.fontSize = 20;
@@ -5857,7 +5997,7 @@ var createScene =  function () {
     lon1_pe_btn.color="white"
     lon1_pe_btn.background="red";
     lon1_pe_btn.top=red_loc_top;
-    lon1_pe_btn.left=loc_left+80;
+    lon1_pe_btn.left=loc_left+80+17;
     lon1_pe_btn.horizontalAlignment = al_left;
     lon1_pe_btn.verticalAlignment  = al_top;
     lon1_pe_btn.textHorizontalAlignment = al_left;		
@@ -5875,9 +6015,9 @@ var createScene =  function () {
         var alon1=Math.abs(lon1);
         var slon1="+";
         if (lon1<0) slon1="-";
-
-        lon1_pe_btn.textBlock.text=slon1+Math.floor(alon1/dtor).toString().padStart(3,"0")+".";
-        lon1_pd_btn.textBlock.text=(Math.floor(100*(alon1/dtor-Math.floor(alon1/dtor)))).toString().padStart(2,"0");
+        var tlon1=slon1+(alon1/dtor).toFixed(2).padStart(6,'0');
+        lon1_pe_btn.textBlock.text=tlon1.substring(0,5);
+        lon1_pd_btn.textBlock.text=tlon1.substring(5,7)+"º";
 
         pos1=rlatlon_to_xyz(r,lat1,lon1,h1);
         redSphere.position=pos1;
@@ -5890,7 +6030,7 @@ var createScene =  function () {
 
     //Ajuste fino de la longitud de la esfera roja (parte decimal)
     var lon1_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("lon1 dec","");
-    lon1_pd_btn.textBlock.text=(Math.floor(100*(alon1/dtor-Math.floor(alon1/dtor)))).toString().padStart(2,"0")+"º";
+    lon1_pd_btn.textBlock.text=tlon1.substring(5,7)+"º";
     lon1_pd_btn.width="35px";
     lon1_pd_btn.height="20px";
     lon1_pd_btn.fontSize = 20;
@@ -5898,7 +6038,7 @@ var createScene =  function () {
     lon1_pd_btn.color="white";
     lon1_pd_btn.background="red";
     lon1_pd_btn.top=red_loc_top;
-    lon1_pd_btn.left=loc_left+130;
+    lon1_pd_btn.left=loc_left+130+17;
     lon1_pd_btn.horizontalAlignment = al_left;
     lon1_pd_btn.verticalAlignment  = al_top;
     lon1_pd_btn.textHorizontalAlignment = al_left;		
@@ -5909,20 +6049,16 @@ var createScene =  function () {
         var val;
         if (evt.y<0) {val=1;} else {val=-1}
 
-        if (lon1>0) {
-            lon1=lon1+0.01*val*dtor;
-        } else {
-            lon1=lon1-0.01*val*dtor;
-        }
+        lon1=lon1+0.01*val*dtor;
         if (lon1>Math.PI) lon1=Math.PI;
         if (lon1<-Math.PI) lon1=-Math.PI;
 
         var alon1=Math.abs(lon1);
         var slon1="+";
         if (lon1<0) slon1="-";
-
-        lon1_pe_btn.textBlock.text=slon1+Math.floor(alon1/dtor).toString().padStart(3,"0")+".";
-        lon1_pd_btn.textBlock.text=(Math.floor(100*(alon1/dtor-Math.floor(alon1/dtor)))).toString().padStart(2,"0")+"º";
+        var tlon1=slon1+(alon1/dtor).toFixed(2).padStart(6,'0');
+        lon1_pe_btn.textBlock.text=tlon1.substring(0,5);
+        lon1_pd_btn.textBlock.text=tlon1.substring(5,7)+"º";
 
         pos1=rlatlon_to_xyz(r,lat1,lon1,h1);
         redSphere.position=pos1;
@@ -5943,7 +6079,7 @@ var createScene =  function () {
     bear1_btn.color="white";
     bear1_btn.background="red";
     bear1_btn.top=red_loc_top;
-    bear1_btn.left=loc_left+170+80;
+    bear1_btn.left=loc_left+170+80+40;
     bear1_btn.horizontalAlignment = al_left;
     bear1_btn.verticalAlignment  = al_top;
     bear1_btn.textHorizontalAlignment = al_left;		
@@ -5962,7 +6098,7 @@ var createScene =  function () {
     height1k_btn.color="white";
     height1k_btn.background="red";
     height1k_btn.top=red_loc_top;
-    height1k_btn.left=loc_left+170;
+    height1k_btn.left=loc_left+170+30;
     height1k_btn.horizontalAlignment = al_left;
     height1k_btn.verticalAlignment  = al_top;
     height1k_btn.textHorizontalAlignment = al_left;		
@@ -6006,7 +6142,7 @@ var createScene =  function () {
     height1m_btn.color="white";
     height1m_btn.background="red";
     height1m_btn.top=red_loc_top;
-    height1m_btn.left=loc_left+170+35;
+    height1m_btn.left=loc_left+170+35+30;
     height1m_btn.horizontalAlignment = al_left;
     height1m_btn.verticalAlignment  = al_top;
     height1m_btn.textHorizontalAlignment = al_left;		
@@ -6044,15 +6180,16 @@ var createScene =  function () {
 
     //--------------AZUL------------------------
 
+    var blue_loc_top="55px";
+    
     var alat2=Math.abs(lat2);
     var slat2="+";
     if (lat2<0) slat2="-";
-
-    var blue_loc_top="55px"
+    var tlat2=slat2+(alat2/dtor).toFixed(2).padStart(5,'0');
 
     //Ajuste fino de la latitud de la esfera roja (parte entera)
     var lat2_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("lat2 int","");
-    lat2_pe_btn.textBlock.text=slat2+Math.floor(alat2/dtor).toString().padStart(2,"0")+".";
+    lat2_pe_btn.textBlock.text=tlat2.substring(0,4);
     lat2_pe_btn.width="40px";
     lat2_pe_btn.height="20px";
     lat2_pe_btn.fontSize = 20;
@@ -6077,9 +6214,9 @@ var createScene =  function () {
         var alat2=Math.abs(lat2);
         var slat2="+";
         if (lat2<0) slat2="-";
-
-        lat2_pe_btn.textBlock.text=slat2+Math.floor(alat2/dtor).toString().padStart(2,"0")+".";
-        lat2_pd_btn.textBlock.text=(Math.floor(100*(alat2/dtor-Math.floor(alat2/dtor)))).toString().padStart(2,"0")+"º";
+        var tlat2=slat2+(alat2/dtor).toFixed(2).padStart(5,'0');
+        lat2_pe_btn.textBlock.text=tlat2.substring(0,4);
+        lat2_pd_btn.textBlock.text=tlat2.substring(4,6)+"º";
 
         pos2=rlatlon_to_xyz(r,lat2,lon2,h2);
         blueSphere.position=pos2;
@@ -6138,7 +6275,7 @@ var createScene =  function () {
 
     //Ajuste fino de la latitud de la esfera azul (parte decimal)
     var lat2_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("lat2 dec","");
-    lat2_pd_btn.textBlock.text=(Math.floor(100*(alat2/dtor-Math.floor(alat2/dtor)))).toString().padStart(2,"0")+"º";
+    lat2_pd_btn.textBlock.text=tlat2.substring(4,6)+"º";
     lat2_pd_btn.width="35px";
     lat2_pd_btn.height="20px";
     lat2_pd_btn.fontSize = 20;
@@ -6157,20 +6294,16 @@ var createScene =  function () {
         var val;
         if (evt.y<0) {val=1;} else {val=-1}
 
-        if (lat2>0) {
-            lat2=lat2+0.01*val*dtor;
-        } else {
-            lat2=lat2-0.01*val*dtor;
-        }
+        lat2+=0.01*val*dtor;
         if (lat2>max_lat*Math.PI/2.0) lat2=max_lat*Math.PI/2.0;
         if (lat2<-max_lat*Math.PI/2.0) lat2=-max_lat*Math.PI/2.0;
 
         var alat2=Math.abs(lat2);
         var slat2="+";
         if (lat2<0) slat2="-";
-
-        lat2_pe_btn.textBlock.text=slat1+Math.floor(alat2/dtor).toString().padStart(2,"0")+".";
-        lat2_pd_btn.textBlock.text=(Math.floor(100*(alat2/dtor-Math.floor(alat2/dtor)))).toString().padStart(2,"0")+"º";
+        var tlat2=slat2+(alat2/dtor).toFixed(2).padStart(5,'0');
+        lat2_pe_btn.textBlock.text=tlat2.substring(0,4);
+        lat2_pd_btn.textBlock.text=tlat2.substring(4,6)+"º";
 
         pos2=rlatlon_to_xyz(r,lat2,lon2,h2);
         blueSphere.position=pos2;
@@ -6181,13 +6314,15 @@ var createScene =  function () {
 	});	
     loca_rect.addControl(lat2_pd_btn);
 
+
     var alon2=Math.abs(lon2);
     var slon2="+";
     if (lon2<0) slon2="-";
+    var tlon2=slon2+(alon2/dtor).toFixed(2).padStart(6,'0');
 
     //Ajuste fino de la longitud de la esfera azul (parte entera)
     var lon2_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("lon2 int","");
-    lon2_pe_btn.textBlock.text=slon2+Math.floor(alon2/dtor).toString().padStart(3,"0")+".";
+    lon2_pe_btn.textBlock.text=tlon2.substring(0,5);
     lon2_pe_btn.width="50px";
     lon2_pe_btn.height="20px";
     lon2_pe_btn.fontSize = 20;
@@ -6195,7 +6330,7 @@ var createScene =  function () {
     lon2_pe_btn.color="white"
     lon2_pe_btn.background="blue";
     lon2_pe_btn.top=blue_loc_top;
-    lon2_pe_btn.left=loc_left+80;
+    lon2_pe_btn.left=loc_left+80+17;
     lon2_pe_btn.horizontalAlignment = al_left;
     lon2_pe_btn.verticalAlignment  = al_top;
     lon2_pe_btn.textHorizontalAlignment = al_left;		
@@ -6213,9 +6348,9 @@ var createScene =  function () {
         var alon2=Math.abs(lon2);
         var slon2="+";
         if (lon2<0) slon2="-";
-
-        lon2_pe_btn.textBlock.text=slon2+Math.floor(alon2/dtor).toString().padStart(3,"0")+".";
-        lon2_pd_btn.textBlock.text=(Math.floor(100*(alon2/dtor-Math.floor(alon2/dtor)))).toString().padStart(2,"0")+"º";
+        var tlon2=slon2+(alon2/dtor).toFixed(2).padStart(6,'0');
+        lon2_pe_btn.textBlock.text=tlon2.substring(0,5);
+        lon2_pd_btn.textBlock.text=tlon2.substring(5,7)+"º";
 
         pos2=rlatlon_to_xyz(r,lat2,lon2,h2);
         blueSphere.position=pos2;
@@ -6228,7 +6363,7 @@ var createScene =  function () {
 
     //Ajuste fino de la longitud de la esfera azul (parte decimal)
     var lon2_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("lon2 dec","");
-    lon2_pd_btn.textBlock.text=(Math.floor(100*(alon2/dtor-Math.floor(alon2/dtor)))).toString().padStart(2,"0")+"º";
+    lon2_pd_btn.textBlock.text=tlon2.substring(5,7)+"º";
     lon2_pd_btn.width="35px";
     lon2_pd_btn.height="20px";
     lon2_pd_btn.fontSize = 20;
@@ -6236,7 +6371,7 @@ var createScene =  function () {
     lon2_pd_btn.color="white";
     lon2_pd_btn.background="blue";
     lon2_pd_btn.top=blue_loc_top;
-    lon2_pd_btn.left=loc_left+130;
+    lon2_pd_btn.left=loc_left+130+17;
     lon2_pd_btn.horizontalAlignment = al_left;
     lon2_pd_btn.verticalAlignment  = al_top;
     lon2_pd_btn.textHorizontalAlignment = al_left;		
@@ -6247,25 +6382,21 @@ var createScene =  function () {
         var val;
         if (evt.y<0) {val=1;} else {val=-1}
 
-        if (lon2>0) {
-            lon2=lon2+0.01001*val*dtor;
-        } else {
-            lon2=lon2-0.01001*val*dtor;
-        }
+        lon2=lon2+0.01*val*dtor;
         if (lon2>Math.PI) lon2=Math.PI;
         if (lon2<-Math.PI) lon2=-Math.PI;
 
         var alon2=Math.abs(lon2);
         var slon2="+";
         if (lon2<0) slon2="-";
-
-        lon2_pe_btn.textBlock.text=slon1+Math.floor(alon2/dtor).toString().padStart(3,"0")+".";
-        lon2_pd_btn.textBlock.text=(Math.floor(100*(alon2/dtor-Math.floor(alon2/dtor)))).toString().padStart(2,"0")+"º";
+        var tlon2=slon2+(alon2/dtor).toFixed(2).padStart(6,'0');
+        lon2_pe_btn.textBlock.text=tlon2.substring(0,5);
+        lon2_pd_btn.textBlock.text=tlon2.substring(5,7)+"º";
 
         pos2=rlatlon_to_xyz(r,lat2,lon2,h2);
         blueSphere.position=pos2;
-		  pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2,h2);
-		  blueSphere_fe.position=pos4;
+		pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2,h2);
+		blueSphere_fe.position=pos4;
         update_all();
  
 	});	
@@ -6281,7 +6412,7 @@ var createScene =  function () {
     bear2_btn.color="white";
     bear2_btn.background="blue";
     bear2_btn.top=blue_loc_top;
-    bear2_btn.left=loc_left+170+80;
+    bear2_btn.left=loc_left+170+80+40;
     bear2_btn.horizontalAlignment = al_left;
     bear2_btn.verticalAlignment  = al_top;
     bear2_btn.textHorizontalAlignment = al_left;		
@@ -6300,7 +6431,7 @@ var createScene =  function () {
     height2k_btn.color="white";
     height2k_btn.background="blue";
     height2k_btn.top=blue_loc_top;
-    height2k_btn.left=loc_left+170;
+    height2k_btn.left=loc_left+170+30;
     height2k_btn.horizontalAlignment = al_left;
     height2k_btn.verticalAlignment  = al_top;
     height2k_btn.textHorizontalAlignment = al_left;		
@@ -6344,7 +6475,7 @@ var createScene =  function () {
     height2m_btn.color="white";
     height2m_btn.background="blue";
     height2m_btn.top=blue_loc_top;
-    height2m_btn.left=loc_left+170+35;
+    height2m_btn.left=loc_left+170+35+30;
     height2m_btn.horizontalAlignment = al_left;
     height2m_btn.verticalAlignment  = al_top;
     height2m_btn.textHorizontalAlignment = al_left;		
@@ -6385,11 +6516,18 @@ var createScene =  function () {
     //Rojo
 
     var red_user_top=25+25+10;
-    var red_user_left=135;
+    var red_user_left=125;
+
+    user_alt_1_co=user_alt_1+h1_alt_co/dtor;
+
+    var auser_alt_1_co=Math.abs(user_alt_1_co);
+    var suser_alt_1_co="+";
+    if (user_alt_1_co<0) suser_alt_1_co="-";
+    var tuser_alt_1_co=suser_alt_1_co+(auser_alt_1_co).toFixed(4).padStart(7,'0');
 
     //Altura observación por usuario (parte entera)
     var usr_alt1_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("user alt1 int","");
-    usr_alt1_pe_btn.textBlock.text=Math.floor(user_alt_1).toString().padStart(2,"0")+".";
+    usr_alt1_pe_btn.textBlock.text=tuser_alt_1_co.substring(0,4);
     usr_alt1_pe_btn.width="30px";
     usr_alt1_pe_btn.height="18px";
     usr_alt1_pe_btn.fontSize = 16;
@@ -6411,11 +6549,7 @@ var createScene =  function () {
         if (user_alt_1>90) user_alt_1=90;
         if (user_alt_1<0) user_alt_1=0;
 
-		user_alt_1_co=user_alt_1+h1_alt_co/dtor;
-        
-        usr_alt1_pe_btn.textBlock.text=Math.floor(user_alt_1_co).toString().padStart(2,"0")+".";
-        usr_alt1_pd_btn.textBlock.text=(Math.floor(100*(user_alt_1_co-Math.floor(user_alt_1_co)))).toString().padStart(2,"0");
-        usr_alt1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_1_co-Math.floor(100*user_alt_1_co)))).toString().padStart(2,"0")+"º";
+        update_user_data();
         
         update_all();
         
@@ -6424,7 +6558,7 @@ var createScene =  function () {
 
     //Altura de observación por usuario (parte decimal)
     var usr_alt1_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("user alt1 dec","");
-    usr_alt1_pd_btn.textBlock.text=(Math.floor(100*(user_alt_1_co-Math.floor(user_alt_1_co)))).toString().padStart(2,"0");
+    usr_alt1_pd_btn.textBlock.text=tuser_alt_1_co.substring(4,6);
     usr_alt1_pd_btn.width="20px";
     usr_alt1_pd_btn.height="18px";
     usr_alt1_pd_btn.fontSize = 16;
@@ -6446,13 +6580,7 @@ var createScene =  function () {
         if (user_alt_1>90) user_alt_1=90;
         if (user_alt_1<0) user_alt_1=0;
 
-		user_alt_1_co=user_alt_1+h1_alt_co/dtor;
-        
-        user_alt_1_co+=0.000001;
-        usr_alt1_pe_btn.textBlock.text=Math.floor(user_alt_1_co).toString().padStart(2,"0")+".";
-        usr_alt1_pd_btn.textBlock.text=(Math.floor(100*(user_alt_1_co-Math.floor(user_alt_1_co)))).toString().padStart(2,"0");
-        usr_alt1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_1_co-Math.floor(100*user_alt_1_co)))).toString().padStart(2,"0")+"º";
-        user_alt_1_co-=0.000001;
+        update_user_data();
 
         update_all();
 
@@ -6461,7 +6589,7 @@ var createScene =  function () {
 
     //Altura de observación por usuario (parte decimal)
     var usr_alt1_pd2_btn=BABYLON.GUI.Button.CreateSimpleButton("user alt1 dec","");
-    usr_alt1_pd2_btn.textBlock.text=(Math.floor(100*(user_alt_1_co-Math.floor(user_alt_1_co)))).toString().padStart(2,"0")+"º";
+    usr_alt1_pd2_btn.textBlock.text=tuser_alt_1_co.substring(6,8)+"º";
     usr_alt1_pd2_btn.width="25px";
     usr_alt1_pd2_btn.height="18px";
     usr_alt1_pd2_btn.fontSize = 16;
@@ -6483,22 +6611,18 @@ var createScene =  function () {
         if (user_alt_1>90) user_alt_1=90;
         if (user_alt_1<0) user_alt_1=0;
 
-		user_alt_1_co=user_alt_1+h1_alt_co/dtor;
-        
-        user_alt_1_co+=0.000001;
-        usr_alt1_pe_btn.textBlock.text=Math.floor(user_alt_1_co).toString().padStart(2,"0")+".";
-        usr_alt1_pd_btn.textBlock.text=(Math.floor(100*(user_alt_1_co-Math.floor(user_alt_1_co)))).toString().padStart(2,"0");
-        usr_alt1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_1_co-Math.floor(100*user_alt_1_co)))).toString().padStart(2,"0")+"º";
-        user_alt_1_co-=0.000001;
+        update_user_data();
 
         update_all();
  
 	});	
     user_rect.addControl(usr_alt1_pd2_btn);
 
+    var tuser_az_1=(user_az_1).toFixed(4).padStart(8,'0');
+
     //Azimut observación por usuario (parte entera)
     var usr_az1_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("user az1 int","");
-    usr_az1_pe_btn.textBlock.text=Math.floor(user_az_1).toString().padStart(3,"0")+".";
+    usr_az1_pe_btn.textBlock.text=tuser_az_1.substring(0,4);
     usr_az1_pe_btn.width="35px";
     usr_az1_pe_btn.height="18px";
     usr_az1_pe_btn.fontSize = 16;
@@ -6519,10 +6643,8 @@ var createScene =  function () {
         user_az_1+=val;
         if (user_az_1>=360) user_az_1-=360;
         if (user_az_1<0) user_az_1+=360;
-        
-        usr_az1_pe_btn.textBlock.text=Math.floor(user_az_1).toString().padStart(3,"0")+".";
-        usr_az1_pd_btn.textBlock.text=(Math.floor(100*(user_az_1-Math.floor(user_az_1)))).toString().padStart(2,"0");
-        usr_az1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_1-Math.floor(100*user_az_1)))).toString().padStart(2,"0")+"º";
+
+        update_user_data();
 
         update_all();
         
@@ -6531,7 +6653,7 @@ var createScene =  function () {
 
     //Azimut de observación por usuario (parte decimal)
     var usr_az1_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("user az1 dec","");
-    usr_az1_pd_btn.textBlock.text=(Math.floor(100*(user_az_1-Math.floor(user_az_1)))).toString().padStart(2,"0");
+    usr_az1_pd_btn.textBlock.text=tuser_az_1.substring(4,6);
     usr_az1_pd_btn.width="20px";
     usr_az1_pd_btn.height="18px";
     usr_az1_pd_btn.fontSize = 16;
@@ -6552,12 +6674,8 @@ var createScene =  function () {
         user_az_1+=0.01000000*val;
         if (user_az_1>=360) user_az_1-=360;
         if (user_az_1<0) user_az_1+=360;
-        
-        user_az_1+=0.000001;
-        usr_az1_pe_btn.textBlock.text=Math.floor(user_az_1).toString().padStart(3,"0")+".";
-        usr_az1_pd_btn.textBlock.text=(Math.floor(100*(user_az_1-Math.floor(user_az_1)))).toString().padStart(2,"0");
-        usr_az1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_1-Math.floor(100*user_az_1)))).toString().padStart(2,"0")+"º";
-        user_az_1-=0.000001;
+
+        update_user_data();
 
         update_all();
  
@@ -6566,7 +6684,7 @@ var createScene =  function () {
 
     //Azimut de observación por usuario (parte decimal)
     var usr_az1_pd2_btn=BABYLON.GUI.Button.CreateSimpleButton("user az1 dec","");
-    usr_az1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_1-Math.floor(100*user_az_1)))).toString().padStart(2,"0")+"º";
+    usr_az1_pd2_btn.textBlock.text=tuser_az_1.substring(6,8)+"º";
     usr_az1_pd2_btn.width="25px";
     usr_az1_pd2_btn.height="18px";
     usr_az1_pd2_btn.fontSize = 16;
@@ -6588,11 +6706,7 @@ var createScene =  function () {
         if (user_az_1>=360) user_az_1-=360;
         if (user_az_1<0) user_az_1+=360;
         
-        user_az_1+=0.000001;
-        usr_az1_pe_btn.textBlock.text=Math.floor(user_az_1).toString().padStart(3,"0")+".";
-        usr_az1_pd_btn.textBlock.text=(Math.floor(100*(user_az_1-Math.floor(user_az_1)))).toString().padStart(2,"0");
-        usr_az1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_1-Math.floor(100*user_az_1)))).toString().padStart(2,"0")+"º";
-        user_az_1-=0.000001;
+        update_user_data();
 
         update_all();
  
@@ -6605,9 +6719,15 @@ var createScene =  function () {
     var blue_user_top=red_user_top+25;
     var blue_user_left=red_user_left;
 
+    user_alt_2_co=user_alt_2+h2_alt_co/dtor;
+    var auser_alt_2_co=Math.abs(user_alt_2_co);
+    var suser_alt_2_co="+";
+    if (user_alt_2_co<0) suser_alt_2_co="-";
+    var tuser_alt_2_co=suser_alt_2_co+(auser_alt_2_co).toFixed(4).padStart(7,'0');
+
     //Altura observación por usuario (parte entera)
     var usr_alt2_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("user alt2 int","");
-    usr_alt2_pe_btn.textBlock.text=Math.floor(user_alt_2_co).toString().padStart(2,"0")+".";
+    usr_alt2_pe_btn.textBlock.text=tuser_alt_2_co.substring(0,4);
     usr_alt2_pe_btn.width="30px";
     usr_alt2_pe_btn.height="18px";
     usr_alt2_pe_btn.fontSize = 16;
@@ -6629,13 +6749,7 @@ var createScene =  function () {
         if (user_alt_2>90) user_alt_2=90;
         if (user_alt_2<0) user_alt_2=0;
 
-	    user_alt_2_co=user_alt_2_co+h2_alt_co/dtor;
-        
-        user_alt_2_co+=0.00001;
-        usr_alt2_pe_btn.textBlock.text=Math.floor(user_alt_2_co).toString().padStart(2,"0")+".";
-        usr_alt2_pd_btn.textBlock.text=(Math.floor(100*(user_alt_2_co-Math.floor(user_alt_2_co)))).toString().padStart(2,"0");
-        usr_alt2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_2_co-Math.floor(100*user_alt_2_co)))).toString().padStart(2,"0")+"º";
-        user_alt_2_co-=0.00001;
+        update_user_data();
 
         update_all();
         
@@ -6644,7 +6758,7 @@ var createScene =  function () {
 
     //Altura de observación por usuario (parte decimal)
     var usr_alt2_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("user alt2 dec","");
-    usr_alt2_pd_btn.textBlock.text=(Math.floor(100*(user_alt_2_co-Math.floor(user_alt_2_co)))).toString().padStart(2,"0");
+    usr_alt2_pd_btn.textBlock.text=tuser_alt_2_co.substring(4,6);
     usr_alt2_pd_btn.width="20px";
     usr_alt2_pd_btn.height="18px";
     usr_alt2_pd_btn.fontSize = 16;
@@ -6666,13 +6780,7 @@ var createScene =  function () {
         if (user_alt_2>90) user_alt_2=90;
         if (user_alt_2<0) user_alt_2=0;
 
-		user_alt_2_co=user_alt_2+h2_alt_co/dtor;
-        
-        user_alt_2_co+=0.00001;
-        usr_alt2_pe_btn.textBlock.text=Math.floor(user_alt_2_co).toString().padStart(2,"0")+".";
-        usr_alt2_pd_btn.textBlock.text=(Math.floor(100*(user_alt_2_co-Math.floor(user_alt_2_co)))).toString().padStart(2,"0");
-        usr_alt2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_2_co-Math.floor(100*user_alt_2_co)))).toString().padStart(2,"0")+"º";
-        user_alt_2_co-=0.00001;
+        update_user_data();
 
         update_all();
  
@@ -6681,7 +6789,8 @@ var createScene =  function () {
 
     //Altura de observación por usuario (parte decimal)
     var usr_alt2_pd2_btn=BABYLON.GUI.Button.CreateSimpleButton("user alt2 dec","");
-    usr_alt2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_2_co-Math.floor(100*user_alt_2_co)))).toString().padStart(2,"0")+"º";
+    usr_alt2_pd2_btn.textBlock.text=tuser_alt_2_co.substring(6,8)+"º";
+
     usr_alt2_pd2_btn.width="25px";
     usr_alt2_pd2_btn.height="18px";
     usr_alt2_pd2_btn.fontSize = 16;
@@ -6703,22 +6812,19 @@ var createScene =  function () {
         if (user_alt_2>90) user_alt_2=90;
         if (user_alt_2<0) user_alt_2=0;
 
-		user_alt_2_co=user_alt_2+h2_alt_co/dtor;
-        
-        user_alt_2_co+=0.00001;
-        usr_alt2_pe_btn.textBlock.text=Math.floor(user_alt_2_co).toString().padStart(2,"0")+".";
-        usr_alt2_pd_btn.textBlock.text=(Math.floor(100*(user_alt_2_co-Math.floor(user_alt_2_co)))).toString().padStart(2,"0");
-        usr_alt2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_2_co-Math.floor(100*user_alt_2_co)))).toString().padStart(2,"0")+"º";
-        user_alt_2_co-=0.00001;
+        update_user_data();
 
         update_all();
  
 	});	
     user_rect.addControl(usr_alt2_pd2_btn);
 
+
+    var tuser_az_2=(user_az_2).toFixed(4).padStart(8,'0');
+
     //Azimut observación por usuario (parte entera)
     var usr_az2_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("user az2 int","");
-    usr_az2_pe_btn.textBlock.text=Math.floor(user_az_2).toString().padStart(3,"0")+".";
+    usr_az2_pe_btn.textBlock.text=tuser_az_2.substring(0,4);
     usr_az2_pe_btn.width="35px";
     usr_az2_pe_btn.height="18px";
     usr_az2_pe_btn.fontSize = 16;
@@ -6739,12 +6845,8 @@ var createScene =  function () {
         user_az_2+=val;
         if (user_az_2>=360) user_az_2-=360;
         if (user_az_2<0) user_az_2+=360;
-        
-        user_az_2+=0.00001;
-        usr_az2_pe_btn.textBlock.text=Math.floor(user_az_2).toString().padStart(3,"0")+".";
-        usr_az2_pd_btn.textBlock.text=(Math.floor(100*(user_az_2-Math.floor(user_az_2)))).toString().padStart(2,"0");
-        usr_az2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_2-Math.floor(100*user_az_2)))).toString().padStart(2,"0")+"º";
-        user_az_2-=0.00001;
+
+        update_user_data();
 
         update_all();
         
@@ -6753,7 +6855,7 @@ var createScene =  function () {
 
     //Azimut de observación por usuario (parte decimal)
     var usr_az2_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("user az2 dec","");
-    usr_az2_pd_btn.textBlock.text=(Math.floor(100*(user_az_2-Math.floor(user_az_2)))).toString().padStart(2,"0");
+    usr_az2_pd_btn.textBlock.text=tuser_az_2.substring(4,6);
     usr_az2_pd_btn.width="20px";
     usr_az2_pd_btn.height="18px";
     usr_az2_pd_btn.fontSize = 16;
@@ -6774,12 +6876,8 @@ var createScene =  function () {
         user_az_2+=0.01000000*val;
         if (user_az_2>=360) user_az_2-=360;
         if (user_az_2<0) user_az_2+=360;
-        
-        user_az_2+=0.00001;
-        usr_az2_pe_btn.textBlock.text=Math.floor(user_az_2).toString().padStart(3,"0")+".";
-        usr_az2_pd_btn.textBlock.text=(Math.floor(100*(user_az_2-Math.floor(user_az_2)))).toString().padStart(2,"0");
-        usr_az2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_2-Math.floor(100*user_az_2)))).toString().padStart(2,"0")+"º";
-        user_az_2-=0.00001;
+
+        update_user_data();
 
         update_all();
  
@@ -6788,7 +6886,7 @@ var createScene =  function () {
 
     //Azimut de observación por usuario (parte decimal)
     var usr_az2_pd2_btn=BABYLON.GUI.Button.CreateSimpleButton("user az2 dec","");
-    usr_az2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_2-Math.floor(100*user_az_2)))).toString().padStart(2,"0")+"º";
+    usr_az2_pd2_btn.textBlock.text=tuser_az_2.substring(6,8)+"º";
     usr_az2_pd2_btn.width="25px";
     usr_az2_pd2_btn.height="18px";
     usr_az2_pd2_btn.fontSize = 16;
@@ -6809,29 +6907,66 @@ var createScene =  function () {
         user_az_2+=0.0001000000*val;
         if (user_az_2>=360) user_az_2-=360;
         if (user_az_2<0) user_az_2+=360;
-        
-        user_az_2+=0.00001;
-        usr_az2_pe_btn.textBlock.text=Math.floor(user_az_2).toString().padStart(3,"0")+".";
-        usr_az2_pd_btn.textBlock.text=(Math.floor(100*(user_az_2-Math.floor(user_az_2)))).toString().padStart(2,"0");
-        usr_az2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_2-Math.floor(100*user_az_2)))).toString().padStart(2,"0")+"º";
-        user_az_2-=0.00001;
+
+        update_user_data();
 
         update_all();
  
 	});	
     user_rect.addControl(usr_az2_pd2_btn);
 
+    //
+    function update_user_data() {
+
+        user_alt_1_co=user_alt_1+h1_alt_co/dtor;
+        var auser_alt_1_co=Math.abs(user_alt_1_co);
+        var suser_alt_1_co="+";
+        if (user_alt_1_co<0) suser_alt_1_co="-";
+        var tuser_alt_1_co=suser_alt_1_co+(auser_alt_1_co).toFixed(4).padStart(7,'0');
+
+        usr_alt1_pe_btn.textBlock.text=tuser_alt_1_co.substring(0,4);
+        usr_alt1_pd_btn.textBlock.text=tuser_alt_1_co.substring(4,6);
+        usr_alt1_pd2_btn.textBlock.text=tuser_alt_1_co.substring(6,8)+"º";
+
+
+        var tuser_az_1=(user_az_1).toFixed(4).padStart(8,'0');
+        usr_az1_pe_btn.textBlock.text=tuser_az_1.substring(0,4);
+        usr_az1_pd_btn.textBlock.text=tuser_az_1.substring(4,6);
+        usr_az1_pd2_btn.textBlock.text=tuser_az_1.substring(6,8)+"º";
+
+
+        user_alt_2_co=user_alt_2+h2_alt_co/dtor;
+        var auser_alt_2_co=Math.abs(user_alt_2_co);
+        var suser_alt_2_co="+";
+        if (user_alt_2_co<0) suser_alt_2_co="-";
+        var tuser_alt_2_co=suser_alt_2_co+(auser_alt_2_co).toFixed(4).padStart(7,'0');
+
+        usr_alt2_pe_btn.textBlock.text=tuser_alt_2_co.substring(0,4);
+        usr_alt2_pd_btn.textBlock.text=tuser_alt_2_co.substring(4,6);
+        usr_alt2_pd2_btn.textBlock.text=tuser_alt_2_co.substring(6,8)+"º";
+
+
+        var tuser_az_2=(user_az_2).toFixed(4).padStart(8,'0');
+        usr_az2_pe_btn.textBlock.text=tuser_az_2.substring(0,4);
+        usr_az2_pd_btn.textBlock.text=tuser_az_2.substring(4,6);
+        usr_az2_pd2_btn.textBlock.text=tuser_az_2.substring(6,8)+"º";
+
+    }
+    //
+
+
     //Copia los datos de La Luna en los datos de usuario
     var cmd_btn=BABYLON.GUI.Button.CreateSimpleButton("user az2 dec","");
-    cmd_btn.textBlock.text="CP MOON DATA";
-    cmd_btn.width="95px";
-    cmd_btn.height="18px";
+    cmd_btn.textBlock.text="CP MOON";
+    cmd_btn.width="60px";
+    cmd_btn.height="16px";
     cmd_btn.fontSize = 12;
     cmd_btn.thickness=1;
+    cmd_btn.cornerRadius=4;
     cmd_btn.color="white";
     cmd_btn.background="green";
     cmd_btn.top=10;
-    cmd_btn.left=300;
+    cmd_btn.left=275;
     cmd_btn.horizontalAlignment = al_left;
     cmd_btn.verticalAlignment  = al_top;
     cmd_btn.textHorizontalAlignment = al_left;		
@@ -6843,22 +6978,7 @@ var createScene =  function () {
         user_az_2=moon_az2*1.0/dtor;
         user_alt_2=moon_alt2*1.0/dtor;
 
-		  user_alt_1_co=user_alt_1+h1_alt_co/dtor;
-	     user_alt_2_co=user_alt_2+h2_alt_co/dtor;
-
-        usr_alt1_pe_btn.textBlock.text=Math.floor(user_alt_1_co).toString().padStart(2,"0")+".";
-        usr_alt1_pd_btn.textBlock.text=(Math.floor(100*(user_alt_1_co-Math.floor(user_alt_1_co)))).toString().padStart(2,"0");
-        usr_alt1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_1_co-Math.floor(100*user_alt_1_co)))).toString().padStart(2,"0")+"º";
-        usr_az1_pe_btn.textBlock.text=Math.floor(user_az_1).toString().padStart(3,"0")+".";
-        usr_az1_pd_btn.textBlock.text=(Math.floor(100*(user_az_1-Math.floor(user_az_1)))).toString().padStart(2,"0");
-        usr_az1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_1-Math.floor(100*user_az_1)))).toString().padStart(2,"0")+"º";
-
-        usr_alt2_pe_btn.textBlock.text=Math.floor(user_alt_2_co).toString().padStart(2,"0")+".";
-        usr_alt2_pd_btn.textBlock.text=(Math.floor(100*(user_alt_2_co-Math.floor(user_alt_2_co)))).toString().padStart(2,"0");
-        usr_alt2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_2_co-Math.floor(100*user_alt_2_co)))).toString().padStart(2,"0")+"º";
-        usr_az2_pe_btn.textBlock.text=Math.floor(user_az_2).toString().padStart(3,"0")+".";
-        usr_az2_pd_btn.textBlock.text=(Math.floor(100*(user_az_2-Math.floor(user_az_2)))).toString().padStart(2,"0");
-        usr_az2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_2-Math.floor(100*user_az_2)))).toString().padStart(2,"0")+"º";
+        update_user_data();
 
         update_all();
 	});	
@@ -6866,15 +6986,16 @@ var createScene =  function () {
 
     //Copia los datos del Sol en los datos de usuario
     var csd_btn=BABYLON.GUI.Button.CreateSimpleButton("user az2 dec","");
-    csd_btn.textBlock.text="CP SUN DATA";
-    csd_btn.width="95px";
-    csd_btn.height="18px";
+    csd_btn.textBlock.text="CP SUN";
+    csd_btn.width="55px";
+    csd_btn.height="16px";
     csd_btn.fontSize = 12;
     csd_btn.thickness=1;
+    csd_btn.cornerRadius=4;
     csd_btn.color="white";
     csd_btn.background="green";
-    csd_btn.top=30;
-    csd_btn.left=300;
+    csd_btn.top=10;
+    csd_btn.left=340;
     csd_btn.horizontalAlignment = al_left;
     csd_btn.verticalAlignment  = al_top;
     csd_btn.textHorizontalAlignment = al_left;		
@@ -6886,26 +7007,196 @@ var createScene =  function () {
         user_az_2=sun_az2*1.0/dtor;
         user_alt_2=sun_alt2*1.0/dtor;
 
-		user_alt_1_co=user_alt_1+h1_alt_co/dtor;
-		user_alt_2_co=user_alt_2+h2_alt_co/dtor;
-
-        usr_alt1_pe_btn.textBlock.text=Math.floor(user_alt_1_co).toString().padStart(2,"0")+".";
-        usr_alt1_pd_btn.textBlock.text=(Math.floor(100*(user_alt_1_co-Math.floor(user_alt_1_co)))).toString().padStart(2,"0");
-        usr_alt1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_1_co-Math.floor(100*user_alt_1_co)))).toString().padStart(2,"0")+"º";
-        usr_az1_pe_btn.textBlock.text=Math.floor(user_az_1).toString().padStart(3,"0")+".";
-        usr_az1_pd_btn.textBlock.text=(Math.floor(100*(user_az_1-Math.floor(user_az_1)))).toString().padStart(2,"0");
-        usr_az1_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_1-Math.floor(100*user_az_1)))).toString().padStart(2,"0")+"º";
-
-        usr_alt2_pe_btn.textBlock.text=Math.floor(user_alt_2_co).toString().padStart(2,"0")+".";
-        usr_alt2_pd_btn.textBlock.text=(Math.floor(100*(user_alt_2_co-Math.floor(user_alt_2_co)))).toString().padStart(2,"0");
-        usr_alt2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_alt_2_co-Math.floor(100*user_alt_2_co)))).toString().padStart(2,"0")+"º";
-        usr_az2_pe_btn.textBlock.text=Math.floor(user_az_2).toString().padStart(3,"0")+".";
-        usr_az2_pd_btn.textBlock.text=(Math.floor(100*(user_az_2-Math.floor(user_az_2)))).toString().padStart(2,"0");
-        usr_az2_pd2_btn.textBlock.text=(Math.floor(100*(100*user_az_2-Math.floor(100*user_az_2)))).toString().padStart(2,"0")+"º";
+        update_user_data();
 
         update_all();
+        
 	});	
     user_rect.addControl(csd_btn);
+
+
+    ///Activa o descativa la vista de posición fija o estrella
+    var lstar_btn=BABYLON.GUI.Button.CreateSimpleButton("user az2 dec","");
+    lstar_btn.textBlock.text="RA/DEC";
+    lstar_btn.width="55px";
+    lstar_btn.height="16px";
+    lstar_btn.fontSize = 12;
+    lstar_btn.thickness=1;
+    lstar_btn.cornerRadius=4;
+    lstar_btn.color="white";
+    lstar_btn.background="red";
+    lstar_btn.top=35;
+    lstar_btn.left=340;
+    lstar_btn.horizontalAlignment = al_left;
+    lstar_btn.verticalAlignment  = al_top;
+    lstar_btn.textHorizontalAlignment = al_left;		
+    lstar_btn.fontFamily = 'monospace';
+
+    lstar_btn.onPointerClickObservable.add(function() {
+
+        if (usuario_mira_estrella==1) {
+
+            usuario_mira_estrella=0;
+            lstar_btn.background="red";
+
+        } else {
+
+            usuario_mira_estrella=1;
+            lstar_btn.background="green";
+        }
+
+        update_all();
+
+	});	
+    user_rect.addControl(lstar_btn);
+
+    
+    var tuser_ra=(user_ra).toFixed(2).padStart(5,'0');
+
+    //Ascencsión recta (parte entera)
+    var usr_ra_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("user ra int","");
+    usr_ra_pe_btn.textBlock.text=tuser_ra.substring(0,3);
+    usr_ra_pe_btn.width="30px";
+    usr_ra_pe_btn.height="18px";
+    usr_ra_pe_btn.fontSize = 16;
+    usr_ra_pe_btn.thickness=0;
+    usr_ra_pe_btn.color="black"
+    usr_ra_pe_btn.background="white";
+    usr_ra_pe_btn.top=red_user_top;
+    usr_ra_pe_btn.left=red_user_left+220;
+    usr_ra_pe_btn.horizontalAlignment = al_left;
+    usr_ra_pe_btn.verticalAlignment  = al_top;
+    usr_ra_pe_btn.textHorizontalAlignment = al_left;		
+    usr_ra_pe_btn.fontFamily = 'monospace';
+    usr_ra_pe_btn.onWheelObservable.add(function(evt) {
+
+        var val;
+        if (evt.y<0) {val=1;} else {val=-1}
+
+        user_ra+=val;
+        if (user_ra>24) user_ra+=-24;
+        if (user_ra<0) user_ra+=+24;
+        
+        var tuser_ra=(user_ra).toFixed(2).padStart(5,'0');
+        usr_ra_pe_btn.textBlock.text=tuser_ra.substring(0,3);
+        usr_ra_pd_btn.textBlock.text=tuser_ra.substring(3,5);
+        
+        update_all();
+        
+	});	
+    user_rect.addControl(usr_ra_pe_btn);
+
+    //Ascensción recta (parte decimal)
+    var usr_ra_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("user ra fract","");
+    usr_ra_pd_btn.textBlock.text=usr_ra_pd_btn.textBlock.text=tuser_ra.substring(3,5);
+    usr_ra_pd_btn.width="20px";
+    usr_ra_pd_btn.height="18px";
+    usr_ra_pd_btn.fontSize = 16;
+    usr_ra_pd_btn.thickness=0;
+    usr_ra_pd_btn.color="black";
+    usr_ra_pd_btn.background="white";
+    usr_ra_pd_btn.top=red_user_top;
+    usr_ra_pd_btn.left=red_user_left+30+220;
+    usr_ra_pd_btn.horizontalAlignment = al_left;
+    usr_ra_pd_btn.verticalAlignment  = al_top;
+    usr_ra_pd_btn.textHorizontalAlignment = al_left;		
+    usr_ra_pd_btn.fontFamily = 'monospace';
+    usr_ra_pd_btn.onWheelObservable.add(function(evt) {
+
+        var val;
+        if (evt.y<0) {val=1;} else {val=-1}
+
+        user_ra+=0.0100000*val;
+        if (user_ra>24) user_ra+=-24;
+        if (user_ra<0) user_ra+=+24;
+        
+        var tuser_ra=(user_ra).toFixed(2).padStart(5,'0');
+        usr_ra_pe_btn.textBlock.text=tuser_ra.substring(0,3);
+        usr_ra_pd_btn.textBlock.text=tuser_ra.substring(3,5);
+
+        update_all();
+
+	});	
+    user_rect.addControl(usr_ra_pd_btn);
+
+    var auser_dec=Math.abs(user_dec);
+    var suser_dec="+";
+    if (user_dec<0) suser_dec="-";
+    var tuser_dec=suser_dec+(auser_dec).toFixed(2).padStart(5,'0');
+
+    //Declinacion recta (parte entera)
+    var usr_dec_pe_btn=BABYLON.GUI.Button.CreateSimpleButton("user dec int","");
+    usr_dec_pe_btn.textBlock.text=tuser_dec.substring(0,4);
+    usr_dec_pe_btn.width="30px";
+    usr_dec_pe_btn.height="18px";
+    usr_dec_pe_btn.fontSize = 16;
+    usr_dec_pe_btn.thickness=0;
+    usr_dec_pe_btn.color="black"
+    usr_dec_pe_btn.background="white";
+    usr_dec_pe_btn.top=red_user_top+30;
+    usr_dec_pe_btn.left=red_user_left+220;
+    usr_dec_pe_btn.horizontalAlignment = al_left;
+    usr_dec_pe_btn.verticalAlignment  = al_top;
+    usr_dec_pe_btn.textHorizontalAlignment = al_left;		
+    usr_dec_pe_btn.fontFamily = 'monospace';
+    usr_dec_pe_btn.onWheelObservable.add(function(evt) {
+
+        var val;
+        if (evt.y<0) {val=1;} else {val=-1}
+
+        user_dec+=val;
+        if (user_dec>90) user_dec=90;
+        if (user_dec<-90) user_dec=-90;
+
+        var auser_dec=Math.abs(user_dec);
+        var suser_dec="+";
+        if (user_dec<0) suser_dec="-";
+        var tuser_dec=suser_dec+(auser_dec).toFixed(2).padStart(5,'0');
+        usr_dec_pe_btn.textBlock.text=tuser_dec.substring(0,4);
+        usr_dec_pd_btn.textBlock.text=tuser_dec.substring(4,6);
+
+        update_all();
+        
+	});	
+    user_rect.addControl(usr_dec_pe_btn);
+
+    //Ascensción recta (parte decimal)
+    var usr_dec_pd_btn=BABYLON.GUI.Button.CreateSimpleButton("user dec fract","");
+    usr_dec_pd_btn.textBlock.text=tuser_dec.substring(4,6);
+    usr_dec_pd_btn.width="20px";
+    usr_dec_pd_btn.height="18px";
+    usr_dec_pd_btn.fontSize = 16;
+    usr_dec_pd_btn.thickness=0;
+    usr_dec_pd_btn.color="black";
+    usr_dec_pd_btn.background="white";
+    usr_dec_pd_btn.top=red_user_top+30;
+    usr_dec_pd_btn.left=red_user_left+30+220;
+    usr_dec_pd_btn.horizontalAlignment = al_left;
+    usr_dec_pd_btn.verticalAlignment  = al_top;
+    usr_dec_pd_btn.textHorizontalAlignment = al_left;		
+    usr_dec_pd_btn.fontFamily = 'monospace';
+    usr_dec_pd_btn.onWheelObservable.add(function(evt) {
+
+        var val;
+        if (evt.y<0) {val=1;} else {val=-1}
+
+        user_dec+=0.01*val;
+
+        if (user_dec>90) user_dec=90;
+        if (user_dec<-90) user_dec=-90;
+
+        var auser_dec=Math.abs(user_dec);
+        var suser_dec="+";
+        if (user_dec<0) suser_dec="-";
+        var tuser_dec=suser_dec+(auser_dec).toFixed(2).padStart(5,'0');
+        usr_dec_pe_btn.textBlock.text=tuser_dec.substring(0,4);
+        usr_dec_pd_btn.textBlock.text=tuser_dec.substring(4,6);
+
+        update_all();
+
+	});	
+    user_rect.addControl(usr_dec_pd_btn);
+
 
     //
     //Texto del cuadro de ubicación (ajuste fino)
@@ -6970,11 +7261,11 @@ var createScene =  function () {
 
     //Texto de información en el tab de usuario
     var usr_text = new BABYLON.GUI.TextBlock();
-    usr_text.text="Height  Azimuth";
+    usr_text.text="Height     Azimuth";
     usr_text.color = "white";
     usr_text.fontSize = 14;
     usr_text.top="40px";
-    usr_text.left="160px";
+    usr_text.left="130px";
     usr_text.height="20px"
     usr_text.width="150px"
     usr_text.horizontalAlignment = al_left;
@@ -6986,24 +7277,20 @@ var createScene =  function () {
 
     //Visibilidad de las líneas de observación de usuario sobre la TG
     var user_line_tg_btn=BABYLON.GUI.Button.CreateSimpleButton("user sph","ON SPHERE");
-    user_line_tg_btn.width="70px";
+    user_line_tg_btn.width="65px";
     user_line_tg_btn.height="17px";
-    user_line_tg_btn.fontSize = 13;
+    user_line_tg_btn.fontSize = 11;
     user_line_tg_btn.thickness=1;
     user_line_tg_btn.cornerRadius=4;
     user_line_tg_btn.color="white"
     user_line_tg_btn.background="red";
     user_line_tg_btn.top="10px";
-    user_line_tg_btn.left="140px";
+    user_line_tg_btn.left="130px";
     user_line_tg_btn.horizontalAlignment = al_left;
     user_line_tg_btn.verticalAlignment  = al_top;
     user_line_tg_btn.textHorizontalAlignment = al_left;		
     user_line_tg_btn.fontFamily = 'monospace';
-    if (user_tg_lines_visible==1) {
-        user_line_tg_btn.background="green";
-    } else {
-        user_line_tg_btn_background="red";
-    }
+    if (user_tg_lines_visible==1) user_line_tg_btn.background="green";
     user_line_tg_btn.onPointerClickObservable.add(function() {
         
         if (user_tg_lines_visible==1) {
@@ -7021,15 +7308,15 @@ var createScene =  function () {
 
     //Visibilidad de las líneas de observación de usuario sobre la TG
     var user_line_tp_btn=BABYLON.GUI.Button.CreateSimpleButton("user sph","ON DISK");
-    user_line_tp_btn.width="70px";
+    user_line_tp_btn.width="65px";
     user_line_tp_btn.height="17px";
-    user_line_tp_btn.fontSize = 13;
+    user_line_tp_btn.fontSize = 11;
     user_line_tp_btn.thickness=1;
     user_line_tp_btn.cornerRadius=4;
     user_line_tp_btn.color="white"
     user_line_tp_btn.background="red";
     user_line_tp_btn.top="10px";
-    user_line_tp_btn.left="220px";
+    user_line_tp_btn.left="200px";
     user_line_tp_btn.horizontalAlignment = al_left;
     user_line_tp_btn.verticalAlignment  = al_top;
     user_line_tp_btn.textHorizontalAlignment = al_left;		
@@ -7232,7 +7519,6 @@ var createScene =  function () {
                                     "  " + (Math.abs(moon_az2/dtor)).toFixed(2).padStart(6,"0")+"º"+
                                     " "+mf2.toFixed(2).padStart(5,"0")+"%"+" "+
                                     " "+melo2.toFixed(2).padStart(6,"0")+"º";
-
     moonaltaz2_btn.width="260px";
     moonaltaz2_btn.height="14px";
     moonaltaz2_btn.fontSize = 14;
@@ -7268,7 +7554,6 @@ var createScene =  function () {
     moonpar_btn.textBlock.text=(moon_earth_distance).toFixed(0)+"km      "+
                             mfeh_text+"km    "+
                             (moon_paralax).toFixed(4).padStart(5,"0")+"º"; 
-
     moonpar_btn.width="268px";
     moonpar_btn.height="20px";
     moonpar_btn.fontSize = 14;
@@ -7576,7 +7861,6 @@ var createScene =  function () {
     
     sunaltaz2_btn.textBlock.text=ssun_alt2+(Math.abs(sun_alt2_co/dtor)).toFixed(2).padStart(5,"0")+"º"+
                                     "   " + (Math.abs(sun_az2/dtor)).toFixed(2).padStart(6,"0")+"º";
-
     sunaltaz2_btn.width="150px";
     sunaltaz2_btn.height="20px";
     sunaltaz2_btn.fontSize = 16;
@@ -7613,7 +7897,6 @@ var createScene =  function () {
     sunpar_btn.textBlock.text=(sun_earth_distance/1e6).toFixed(3)+"Mkm   "+
                             sfeh_text+"km    "+
                             (sun_paralax*3600).toFixed(2).padStart(5,"0")+"\""; 
-
     sunpar_btn.width="268px";
     sunpar_btn.height="20px";
     sunpar_btn.fontSize = 14;
@@ -7710,9 +7993,11 @@ var createScene =  function () {
     closed_data_rect.addControl(data_text_o);
     //END GUI----------------------------------------------------
 
+    
     scene.onBeforeRenderObservable.add(() => {
-        engine.disableScissor();
+        //engine.disableScissor();
     });
+    
 
     /*
     scene.onBeforeCameraRenderObservable.add(camera => {
@@ -7726,10 +8011,30 @@ var createScene =  function () {
     });
     */
 
-    
+    /*
+    scene.onBeforeCameraRenderObservable.add(_camera => {
+
+        if (moon_cameras_option==1) {
+            
+            if (_camera == camera_moon_1) {
+                engine.enableScissor(0, 0, canvas.width, canvas.height);
+                engine.clear(BABYLON.Color3.Red(), true, true, true);
+            } 
+
+        } else {
+
+            engine.disableScissor();
+        } 
+
+        
+    });
+    */
 
     //Animación
     scene.registerBeforeRender(function () {
+
+        rt_moon1.render();
+        rt_moon2.render();
 
         if (animation_control==0) return;
 
@@ -7746,6 +8051,7 @@ var createScene =  function () {
         minu_btn.textBlock.text=FECHA[4].toString().padStart(2,"0")+":";
         segu_btn.textBlock.text=FECHA[5].toString().padStart(2,"0");
 
+        gmts_offset();
         update_all();
         
     });
@@ -7768,6 +8074,7 @@ var createScene =  function () {
         //Se desconecta la cámara
         //si el mesh seleccionado es 
         //la esfera roja o azul
+
         if (startingPoint ) { 
             setTimeout(function () {
                 camera.detachControl(canvas);
@@ -7784,7 +8091,7 @@ var createScene =  function () {
             
             startingPoint = null;
             camera.attachControl(canvas, true);
-            
+            //console.log(scene.activeCamera.id)
             return;
         }
 
@@ -8898,42 +9205,49 @@ var createScene =  function () {
 
         }
 
+        //
         var alat1=Math.abs(lat1);
         var slat1="+";
         if (lat1<0) slat1="-";
+        var tlat1=slat1+(alat1/dtor).toFixed(2).padStart(5,'0');
+        lat1_pe_btn.textBlock.text=tlat1.substring(0,4);
+        lat1_pd_btn.textBlock.text=tlat1.substring(4,6)+"º";
 
-        lat1_pe_btn.textBlock.text=slat1+Math.floor(alat1/dtor).toString().padStart(2,"0")+".";
-        lat1_pd_btn.textBlock.text=(Math.floor(100*(alat1/dtor-Math.floor(alat1/dtor)))).toString().padStart(2,"0")+"º";
 
         var alon1=lon1*1.0;
         if (alon1<-Math.PI) alon1=alon1+2*Math.PI;
         if (alon1>Math.PI) alon1=alon1-2*Math.PI;
+        alon1=Math.abs(alon1);
         var slon1="+";
-        if (alon1<0) slon1="-";
-        var alon1=Math.abs(alon1);
-       
-        lon1_pe_btn.textBlock.text=slon1+Math.floor(alon1/dtor).toString().padStart(3,"0")+".";
-        lon1_pd_btn.textBlock.text=(Math.floor(100*(alon1/dtor-Math.floor(alon1/dtor)))).toString().padStart(2,"0")+"º";
+        if (lon1<0) slon1="-";
+        var tlon1=slon1+(alon1/dtor).toFixed(2).padStart(6,'0');
+        lon1_pe_btn.textBlock.text=tlon1.substring(0,5);
+        lon1_pd_btn.textBlock.text=tlon1.substring(5,7)+"º";
+
 
         var alat2=Math.abs(lat2);
         var slat2="+";
         if (lat2<0) slat2="-";
+        var tlat2=slat2+(alat2/dtor).toFixed(2).padStart(5,'0');
+        lat2_pe_btn.textBlock.text=tlat2.substring(0,4);
+        lat2_pd_btn.textBlock.text=tlat2.substring(4,6)+"º";
 
-        lat2_pe_btn.textBlock.text=slat2+Math.floor(alat2/dtor).toString().padStart(2,"0")+".";
-        lat2_pd_btn.textBlock.text=(Math.floor(100*(alat2/dtor-Math.floor(alat2/dtor)))).toString().padStart(2,"0")+"º";
-
+        
         var alon2=lon2*1.0;
         if (alon2<-Math.PI) alon2=alon2+2*Math.PI;
         if (alon2>Math.PI) alon2=alon2-2*Math.PI;
+        alon2=Math.abs(alon2);
         var slon2="+";
-        if (alon2<0) slon2="-";
-        var alon2=Math.abs(alon2);
-
-        lon2_pe_btn.textBlock.text=slon2+Math.floor(alon2/dtor).toString().padStart(3,"0")+".";
-        lon2_pd_btn.textBlock.text=(Math.floor(100*(alon2/dtor-Math.floor(alon2/dtor)))).toString().padStart(2,"0")+"º";
+        if (lon2<0) slon2="-";
+        var tlon2=slon2+(alon2/dtor).toFixed(2).padStart(6,'0');
+        lon2_pe_btn.textBlock.text=tlon2.substring(0,5);
+        lon2_pd_btn.textBlock.text=tlon2.substring(5,7)+"º";
+        //
+        
 
         bear1_btn.textBlock.text=(moon_bear1.toFixed(2)).padStart(6,"0")+"º";        
         bear2_btn.textBlock.text=(moon_bear2.toFixed(2)).padStart(6,"0")+"º";
+
 
         var smoon_alt1="+";
         if (moon_alt1_co<0) smoon_alt1="-";
@@ -8987,6 +9301,14 @@ var createScene =  function () {
                             "    Lat=  "+s_slac+Math.abs((sun_latc/dtor)).toFixed(2).padStart(5,"0")+"º\n"+
                             "    Lon= "+s_sloc+Math.abs((sun_lonc/dtor)).toFixed(2).padStart(6,"0")+"º";
         
+        
+        //
+        if (usuario_mira_estrella==1) {
+
+            update_user_data();
+        }
+        //
+
         //Actualización de la línea y punto de corte
         //de las direcciones hacia La Luna en la TP
         moon_cut_line.dispose();
