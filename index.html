@@ -191,7 +191,7 @@
 //|                                               |
 //|                                               |
 //|                                               |
-//| v0.52gi   17/09/2023                          |
+//| v0.53mp   29/09/2023                          |
 //|                                               |
 //|            cienzorama@gmail.com               |
 //|-----------------------------------------------|
@@ -5169,14 +5169,17 @@ var createScene =  function () {
     gmt_offset_red_text.width="75px"
 
     var gor=FECHA[3]+GMT_OFFSET_RED;
-    if (gor>24) gor-=24; if (gor<0) gor+=24; if (gor==24) gor=0;
+    var pds=0;var spds="+";
+    if (gor>24) { gor-=24; pds=1;spds="+";}
+    if (gor<0) {gor+=24;pds=1;spds="-"}; 
+    if (gor==24) gor=0;
     gmt_offset_red_text.textBlock.text=gor.toString().padStart(2,"0")+":"+
-                                       (FECHA[4]).toString().padStart(2,"0")+":"+
-                                       (FECHA[5]).toString().padStart(2,"0");
+                                       (FECHA[4]).toString().padStart(2,"0")+
+                                       "("+spds+pds.toString()+")";
 
     gmt_offset_red_text.color = "white";
     gmt_offset_red_text.background="red";
-    gmt_offset_red_text.fontSize = 14;
+    gmt_offset_red_text.fontSize = 15;
     gmt_offset_red_text.top=5;
     gmt_offset_red_text.left=305;
     gmt_offset_red_text.thickness = 0;
@@ -5203,14 +5206,17 @@ var createScene =  function () {
     gmt_offset_blue_text.width="75px"
 
     var gob=FECHA[3]+GMT_OFFSET_BLUE;
-    if (gob>24) gob-=24; if (gob<0) gob+=24; if (gob==24) gob=0;
+    var pds=0;var spds="+";
+    if (gob>24) { gob-=24; pds=1;spds="+";}
+    if (gob<0) {gob+=24;pds=1;spds="-"}; 
+    if (gob==24) gob=0;
     gmt_offset_blue_text.textBlock.text=gob.toString().padStart(2,"0")+":"+
-                                       (FECHA[4]).toString().padStart(2,"0")+":"+
-                                       (FECHA[5]).toString().padStart(2,"0");
+                                       (FECHA[4]).toString().padStart(2,"0")+
+                                       "("+spds+pds.toString()+")";
 
     gmt_offset_blue_text.color = "white";
     gmt_offset_blue_text.background="blue";
-    gmt_offset_blue_text.fontSize = 14;
+    gmt_offset_blue_text.fontSize = 15;
     gmt_offset_blue_text.top=35;
     gmt_offset_blue_text.left=305;
     gmt_offset_blue_text.thickness = 0;
@@ -5229,21 +5235,27 @@ var createScene =  function () {
 
     });	
     date_rect.addControl(gmt_offset_blue_text);
+    
 
     function gmts_offset() {
 
-        var gob=FECHA[3]+GMT_OFFSET_BLUE;
-        if (gob>24) gob-=24; if (gob<0) gob+=24; if (gob==24) gob=0;
-        gmt_offset_blue_text.textBlock.text=gob.toString().padStart(2,"0")+":"+
-                                        (FECHA[4]).toString().padStart(2,"0")+":"+
-                                        (FECHA[5]).toString().padStart(2,"0");
-
         var gor=FECHA[3]+GMT_OFFSET_RED;
-        if (gor>24) gor-=24; if (gor<0) gor+=24; if (gor==24) gor=0;
+        var pds=0;var spds="+";
+        if (gor>24) { gor-=24; pds=1;spds="+";}
+        if (gor<0) {gor+=24;pds=1;spds="-"}; 
+        if (gor==24) gor=0;
         gmt_offset_red_text.textBlock.text=gor.toString().padStart(2,"0")+":"+
-                                        (FECHA[4]).toString().padStart(2,"0")+":"+
-                                        (FECHA[5]).toString().padStart(2,"0");
+                                        (FECHA[4]).toString().padStart(2,"0")+
+                                        "("+spds+pds.toString()+")";
 
+        var gob=FECHA[3]+GMT_OFFSET_BLUE;
+        var pds=0;var spds="+";
+        if (gob>24) { gob-=24; pds=1;spds="+";}
+        if (gob<0) {gob+=24;pds=1;spds="-"}; 
+        if (gob==24) gob=0;
+        gmt_offset_blue_text.textBlock.text=gob.toString().padStart(2,"0")+":"+
+                                        (FECHA[4]).toString().padStart(2,"0")+
+                                        "("+spds+pds.toString()+")";
     }
 
 
@@ -7261,7 +7273,7 @@ var createScene =  function () {
 
     //Texto de información en el tab de usuario
     var usr_text = new BABYLON.GUI.TextBlock();
-    usr_text.text="Height     Azimuth";
+    usr_text.text="Height      Azimuth";
     usr_text.color = "white";
     usr_text.fontSize = 14;
     usr_text.top="40px";
@@ -7274,6 +7286,22 @@ var createScene =  function () {
     usr_text.textVerticalAlignment = al_top;		
     usr_text.fontFamily = 'monospace';
     user_rect.addControl(usr_text);
+
+    //Texto de información en el tab de usuario 2
+    var usr_text_2 = new BABYLON.GUI.TextBlock();
+    usr_text_2.text="RA \n\nDEC";
+    usr_text_2.color = "white";
+    usr_text_2.fontSize = 13;
+    usr_text_2.top="60px";
+    usr_text_2.left="315px";
+    usr_text_2.height="80px"
+    usr_text_2.width="50px"
+    usr_text_2.horizontalAlignment = al_left;
+    usr_text_2.verticalAlignment  = al_top;
+    usr_text_2.textHorizontalAlignment = al_left;		
+    usr_text_2.textVerticalAlignment = al_top;		
+    usr_text_2.fontFamily = 'monospace';
+    user_rect.addControl(usr_text_2);
 
     //Visibilidad de las líneas de observación de usuario sobre la TG
     var user_line_tg_btn=BABYLON.GUI.Button.CreateSimpleButton("user sph","ON SPHERE");
