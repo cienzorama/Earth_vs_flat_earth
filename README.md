@@ -5,19 +5,22 @@ Interactive Earth vs. flat earth comparision using babylon.js
 
 https://cienzorama.github.io/Earth_vs_flat_earth/
 
-## Last update [2023 09 29]
+## Last update [2023 10 06]
+
+- Added background stars and constellations figures
+- Added control to show or hide stars and constellation figures
+- Added control to modify figures alpha
+- Precession correction for stars and figures (low accuracy)
+- Added option to point cameras to fixed RA/DEC direction
+- Multiple corrections and optimizations
+
+## Other recent updates
 
 - Added options to view and modify the observers local time
 - Added option to point to fixed RA/DEC direction
-- Multiple corrections and optimizations
-
-## update [2023 08 27]
-
 - Added select location from map option
 - Added change flat earth position and size options
 - Added control to change observers altitude
-- Multiple corrections and optimizations in eclipse calculations
-- Error correction in glow effect
 
 ## Features
 
