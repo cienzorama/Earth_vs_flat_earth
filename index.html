@@ -29,7 +29,7 @@
         <!--<script src="https://openlayers.org/en/v4.6.5/css/ol.css"></script> -->
 
         <!--- Base de datos de figura de las constelaciones --->
-		<script src="js/stars_db.js"></script>
+		<script src="/js/stars_db.js"></script>
 
 
         <style>
@@ -195,7 +195,7 @@
 //|                                               |
 //|                                               |
 //|                                               |
-//| v0.53mp   29/09/2023                          |
+//| v0.53mp   08/10/2023                          |
 //|                                               |
 //|            cienzorama@gmail.com               |
 //|-----------------------------------------------|
@@ -227,6 +227,9 @@ ndiv=200;
 
 //Radio de la esfera
 r=10;
+
+//Visibilidad de la tierra plana
+fe_is_visible=0;
 
 //Factores de escala mínimos y máximos 
 //para el tamaño del disco.
@@ -260,7 +263,7 @@ fe_h=rfe/200.0;
 deltar=1.002*0+1.002;
 rdeltar=r*deltar;
 
-//Radio de la La Tierra
+//Radio (medio) de la La Tierra
 earth_radius=6371.0;
 
 //Factores de escala
@@ -314,7 +317,6 @@ dist_orto_fe=[];
 dist_loxo_fe=[];
 dist_flat_fe=[];
 dist_eqac_fe=[];
-
 
 //Visibilidad de las líneas
 orto_es_visible=0;
@@ -519,7 +521,10 @@ eclipse_data_penumbra=[];
 eclipse_data_penumbra_fe=[];
 eclipse_test=0;
 
-
+//Carga la base de datos de estrellas y figuras
+star_data=[];
+star_pos=[];
+read_star_data();
 
 //Permuta las componetes z e y
 // de un vector
@@ -682,9 +687,15 @@ function calc_fecha(jd) {
     if (mes>2) {ano=c-4716;} else {ano=c-4715;}
     //----
 
+    /*
     var hora=(dia-Math.floor(dia))*24;
     var minuto=(hora-Math.floor(hora))*60;
     var segundo=(minuto-Math.floor(minuto))*60;
+    */
+
+    var hora=(dia*24) % 24;
+    var minuto=(dia*24*60) % 60;
+    var segundo=(dia*24*60*60) % 60; 
 
     dia=Math.floor(dia);
     hora=Math.floor(hora);
@@ -838,7 +849,7 @@ function calc_sun_pos() {
     var sin_i_pe=Math.sin(i_p);
 
     //Escala de la distancia al Sol
-    rp=149597870.7/6371*10;
+    rp=149597870.7/earth_radius*10;
 
     //Transformaciones de rotación en función de los
     //ángulos de orientación de la órbita
@@ -1053,7 +1064,7 @@ function calc_moon_pos() {
 
     lonecl_p=Lprime+(dlon/(1e6))*dtor;
     latecl_p=(dlat/(1e6))*dtor;
-    r_p=(385000.56+drad/(1e3))/6371.0;
+    r_p=(385000.56+drad/(1e3))/earth_radius;
 
     var ss=10;
 
@@ -1290,9 +1301,10 @@ var agdf=function(xx) {
 //sobre la esfera
 var rlatlon_to_xyz=function(fun_r,fun_lat,fun_lon,fun_h) {
 
-	 fun_r=fun_r+fun_h/1000.0/factor_de_escala_sp;
-    var fun_x=fun_r*Math.cos(fun_lon)*Math.cos(fun_lat);
-    var fun_z=fun_r*Math.sin(fun_lon)*Math.cos(fun_lat);
+	fun_r=fun_r+fun_h/1000.0/factor_de_escala_sp;
+    var cos_fun_lat=Math.cos(fun_lat);
+    var fun_x=fun_r*Math.cos(fun_lon)*cos_fun_lat;
+    var fun_z=fun_r*Math.sin(fun_lon)*cos_fun_lat;
     var fun_y=fun_r*Math.sin(fun_lat);
 
     var fun_v=new BABYLON.Vector3(fun_x,fun_y,fun_z);
@@ -1408,7 +1420,7 @@ var calculate_lines=function() {
     var v1=pos1.subtract(zero);
     var v2=pos2.subtract(zero);
 
-    base_line=BABYLON.Vector3.Distance(v1,v2)/r*6371.0;
+    base_line=BABYLON.Vector3.Distance(v1,v2)/r*earth_radius;
 
     v1.normalize();
     v2.normalize();
@@ -1658,7 +1670,7 @@ var calculate_lines=function() {
     sun_sphere_pos.scaleInPlace(r);
 
     //Distancia Tierra-Sol
-    sun_earth_distance=BABYLON.Vector3.Distance(sun_pos,zero)*6371/10.0;
+    sun_earth_distance=BABYLON.Vector3.Distance(sun_pos,zero)*earth_radius/10.0;
 
     //Líneas de cada ubicación y el centro
     //hasta El Sol
@@ -1670,7 +1682,7 @@ var calculate_lines=function() {
     moon_pos=calc_moon_pos();
 
     //Distancia Tierra-Luna
-    moon_earth_distance=BABYLON.Vector3.Distance(moon_pos,zero)*6371/10.0;
+    moon_earth_distance=BABYLON.Vector3.Distance(moon_pos,zero)*earth_radius/10.0;
 
     //Líneas de cada ubicación y el centro
     //hasta La Luna
@@ -1847,7 +1859,7 @@ var calculate_lines=function() {
     if (sun_az2<0) sun_az2=sun_az2+2*Math.PI;
 
     //Distancia de la línea base de las ubicaciones
-    moon_bl=BABYLON.Vector3.Distance(pos1,pos2)/(rdeltar)*6371;
+    moon_bl=BABYLON.Vector3.Distance(pos1,pos2)/(rdeltar)*earth_radius;
 
     //Rumbo de la ortodroma entre las ubicaciones cuando pasa por la 1
     var qy = Math.sin(lon02-lon01) * Math.cos(lat02);
@@ -2022,7 +2034,7 @@ var calculate_lines=function() {
         new BABYLON.Vector3(moon_cut_p.x,0,moon_cut_p.z),moon_cut_p
     ];
 
-    moon_cut_d=6371/r*BABYLON.Vector3.Distance(moon_cut_line_data[0],moon_cut_line_data[1]);
+    moon_cut_d=earth_radius/r*BABYLON.Vector3.Distance(moon_cut_line_data[0],moon_cut_line_data[1]);
 
     //--//
 
@@ -2059,7 +2071,7 @@ var calculate_lines=function() {
         new BABYLON.Vector3(sun_cut_p.x,0,sun_cut_p.z),sun_cut_p
     ];
 
-    sun_cut_d=6371/r*BABYLON.Vector3.Distance(sun_cut_line_data[0],sun_cut_line_data[1]);
+    sun_cut_d=earth_radius/r*BABYLON.Vector3.Distance(sun_cut_line_data[0],sun_cut_line_data[1]);
     
     //Datos de usuario sobre la esfera
     var sp_user1_vn=user1.subtract(zero);
@@ -2095,13 +2107,13 @@ var calculate_lines=function() {
     ];
 
     //Distancia mínima entre las líneas
-    sp_user_cut_dl=6371/r*BABYLON.Vector3.Distance(sp_user_cut1,sp_user_cut2);
+    sp_user_cut_dl=earth_radius/r*BABYLON.Vector3.Distance(sp_user_cut1,sp_user_cut2);
     //Distancia al observador 1
-    sp_user_cut_d1=6371/r*coci1;
+    sp_user_cut_d1=earth_radius/r*coci1;
     //Distancia al observador 2
-    sp_user_cut_d2=6371/r*coci2;
+    sp_user_cut_d2=earth_radius/r*coci2;
     //Distancia al centro de La Tierra
-    sp_user_cut_d=6371/r*sp_user_cut_h;
+    sp_user_cut_d=earth_radius/r*sp_user_cut_h;
 
 
     //Datos de usuario sobre la tierra plana
@@ -2142,17 +2154,17 @@ var calculate_lines=function() {
     ];
 
     //Distancia mínima entre las líneas
-    fe_user_cut_dl=6371/r*BABYLON.Vector3.Distance(fe_user_cut1,fe_user_cut2);
+    fe_user_cut_dl=earth_radius/r*BABYLON.Vector3.Distance(fe_user_cut1,fe_user_cut2);
     //Distancia al observador 1
-    fe_user_cut_d1=6371/r*coci1;
-    fe_user_cut_d1=6371/r*BABYLON.Vector3.Distance(fe_user_cut_p,
+    fe_user_cut_d1=earth_radius/r*coci1;
+    fe_user_cut_d1=earth_radius/r*BABYLON.Vector3.Distance(fe_user_cut_p,
                           new BABYLON.Vector3(pos3.x,0,pos3.z));
     //Distancia al observador 2
-    fe_user_cut_d2=6371/r*coci2;
-    fe_user_cut_d2=6371/r*BABYLON.Vector3.Distance(fe_user_cut_p,
+    fe_user_cut_d2=earth_radius/r*coci2;
+    fe_user_cut_d2=earth_radius/r*BABYLON.Vector3.Distance(fe_user_cut_p,
                           new BABYLON.Vector3(pos4.x,0,pos4.z));
     //Altura respecto del plano
-    fe_user_cut_d=6371/r*fe_user_cut_h;
+    fe_user_cut_d=earth_radius/r*fe_user_cut_h;
 
     //
     //Posición y dirección de las puntas de flecha
@@ -2290,6 +2302,11 @@ var calculate_lines=function() {
     rose_lines_data=[nan,nan];
     rose_lines_color_data=[nan,nan];
     n_rose_lines_data=0;
+
+    hc_lines_data=[nan,nan];
+    hc_lines_color_data=[nan,nan];
+    n_hc_lines_data=0;
+
     var temp_moon_pos=[];
 
     if (additional_model_info==1) {
@@ -2306,6 +2323,8 @@ var calculate_lines=function() {
         
         var r_escala=0.5;
         for (var k=0;k<4;k++) {
+
+            if (fe_is_visible==0 && k>1) continue;
 
             if (k==0) {
 
@@ -2404,11 +2423,9 @@ var calculate_lines=function() {
             }
 
 
+            // Horizonte astronomico
 
-
-            //
-            //Añade un punto nulo a la lista
-            //Fin de la cadena de líneas
+            // Añade punto nulo
             rose_p3=nan.subtract(zero);
             rose_lines_data[n_rose_lines_data]=rose_p3;
             rose_lines_color_data[n_rose_lines_data]=rcolor;
@@ -2434,15 +2451,70 @@ var calculate_lines=function() {
                 
             }
 
-            //Añade un punto nulo a la lista
-            //Fin de la cadena de líneas
+            //Añade un punto nulo
             rose_p3=nan.subtract(zero);
             rose_lines_data[n_rose_lines_data]=rose_p3;
             rose_lines_color_data[n_rose_lines_data]=rcolor;
             n_rose_lines_data++; 
+
             //
 
+            //Cálculo del horizonte geométrico
+            //
+            //Añade un punto nulo
+            rose_p3=nan.subtract(zero);
+            hc_lines_data[n_hc_lines_data]=rose_p3;
+            hc_lines_color_data[n_hc_lines_data]=rcolor;
+            n_hc_lines_data++; 
 
+            var hobs=0;
+            if (k<2) {
+
+                if (k==0) hobs=h1/earth_radius*r/1000.0;
+                if (k==1) hobs=h2/earth_radius*r/1000.0;
+
+                var ach=Math.acos(r/(r+hobs));
+                var ch_l=r*Math.tan(ach);
+                var ch_s=ch_l*Math.cos(ach);
+                var ch_p=ch_l*Math.sin(ach);
+
+                var ch_pos=rpos.subtract(zero);
+                var ch_posn=rpos.subtract(zero);
+                ch_posn.normalize();
+                ch_posn.scaleInPlace((r+hobs-ch_p)*1.0000);
+
+                var ch_aux=new BABYLON.Vector3(0,1,0);
+                if (BABYLON.Vector3.Dot(ch_aux,ch_posn)==1) ch_aux=new BABYLON.Vector3(1,0,0);
+
+                var ch_x=BABYLON.Vector3.Cross(ch_aux,ch_pos);
+                ch_x.normalize();
+                var ch_y=BABYLON.Vector3.Cross(ch_x,ch_pos);
+                ch_y.normalize();
+
+                for (var j=0;j<30;j++) {
+
+                    var rose_ang=j*2*Math.PI/29;
+                    var rcolor=new BABYLON.Color4(1,0,1,1);
+            
+                    var rcos=Math.cos(rose_ang);
+                    var rsin=Math.sin(rose_ang);
+
+                    rose_p1=new BABYLON.Vector3(ch_posn.x+ch_s*(ch_x.x*rcos+ch_y.x*rsin),
+                                                ch_posn.y+ch_s*(ch_x.y*rcos+ch_y.y*rsin),
+                                                ch_posn.z+ch_s*(ch_x.z*rcos+ch_y.z*rsin));
+                    hc_lines_data[n_hc_lines_data]=rose_p1;
+                    hc_lines_color_data[n_hc_lines_data]=rcolor;
+                    n_hc_lines_data++;
+
+                }
+            }
+
+            //Añade un punto nulo
+            rose_p3=nan.subtract(zero);
+            hc_lines_data[n_hc_lines_data]=rose_p3;
+            hc_lines_color_data[n_hc_lines_data]=rcolor;
+            n_hc_lines_data++; 
+            //
 
             //
             var rcolor=new BABYLON.Color4(1,1,0,1);
@@ -2955,7 +3027,7 @@ var calculate_lines=function() {
 
     }
 
-    star_data(JD);
+    update_star_data(JD);
 
 }
 
@@ -2964,6 +3036,8 @@ var createScene =  function () {
 
     var scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color3(0.0, 0.0, 0.0);
+
+    scene.setRenderingAutoClearDepthStencil(2, false, false)
 
     //Cámara
     var camera = new BABYLON.ArcRotateCamera("Camera main", 0, 0, 10, zero, scene);
@@ -2998,9 +3072,9 @@ var createScene =  function () {
     //evitar que el GUI se represente
     //en los viewports de las cámaras 
     //adicionales
-    camera.layerMask =       0x10000001;
-    //camera_moon_1.layerMask= 0x00000010;
-    //camera_moon_2.layerMask= 0x00000100;
+    camera.layerMask =        0x00000001;
+    camera_moon_1.layerMask = 0x00000110;
+    camera_moon_2.layerMask = 0x00000110;
     
     //Campo visual de las cámaras adicionales
     //Típicamente el doble del tamaño de La Luna (~1º)
@@ -3013,8 +3087,8 @@ var createScene =  function () {
     //elementos
     camera_moon_1.minZ=0.001;
     camera_moon_2.minZ=0.001;
-    camera_moon_1.maxZ=300000;
-    camera_moon_2.maxZ=300000;
+    camera_moon_1.maxZ=2000000;
+    camera_moon_2.maxZ=2000000;
 
     // Iluminación global
     var light = new BABYLON.PointLight("omni", new BABYLON.Vector3(0, 2000, 0), scene);
@@ -3127,6 +3201,7 @@ var createScene =  function () {
 
     //Esfera de La Tierra
     var EarthSphere = BABYLON.MeshBuilder.CreateSphere("Earth", {segments:400, diameter:2*r}, scene);
+    //var EarthSphere = BABYLON.MeshBuilder.CreateIcoSphere("Earth", {subdivisions: 5, radius: r}, scene);
     EarthSphere.material = EarthMat;
     EarthSphere.position.y = 0;
     EarthSphere.position.x = 0;
@@ -3183,6 +3258,7 @@ var createScene =  function () {
     //Cilindro muy achatado (disco) para la tierra plana
 	EarthDisk = BABYLON.MeshBuilder.CreateCylinder("FlatEarth", {height:fe_h, tessellation: 60, diameter: 4*rfe,faceUV: faceUV, faceColors: faceColors});
 	EarthDisk.material = FlatEarthMat;
+    EarthDisk.isVisible=fe_is_visible;
 
     //Correción de rotación de la tierra plana
     EarthDisk.rotation=new BABYLON.Vector3(0, 0, 0);
@@ -3226,6 +3302,7 @@ var createScene =  function () {
     var moonFe = BABYLON.MeshBuilder.CreateSphere("moon", {diameter:0.5}, scene);
     moonFe.material = moonMat1;
     moonFe.position=moon_fe_pos;
+    moonFe.isVisible=fe_is_visible;
 
      //Marcador de posicion del Sol sobre La Tierra
     var sunMat1 = new BABYLON.StandardMaterial("moonMat", scene);
@@ -3243,6 +3320,7 @@ var createScene =  function () {
     var sunFe = BABYLON.MeshBuilder.CreateSphere("sun", {diameter:0.5}, scene);
     sunFe.material = sunMat1;
     sunFe.position = sun_fe_pos;
+    sunFe.isVisible=fe_is_visible;
     
     //Esfera roja
     pos1=rlatlon_to_xyz(r,lat1,lon1,h1);
@@ -3263,12 +3341,14 @@ var createScene =  function () {
     redSphere_fe = BABYLON.MeshBuilder.CreateSphere("red_fe", {diameter:handler_radius}, scene);
     redSphere_fe.material = redMat;
     redSphere_fe.position=pos3;
+    redSphere_fe.isVisible=fe_is_visible;
 
     //Esfera azul sobre la tierra plana
     pos4=rlatlon_to_xyz_fe(rfe,lat2,lon2,h2);
     blueSphere_fe = BABYLON.MeshBuilder.CreateSphere("blue_fe", {diameter:handler_radius}, scene);
     blueSphere_fe.material = blueMat;
     blueSphere_fe.position=pos4;
+    blueSphere_fe.isVisible=fe_is_visible;
 
     //Esfera auxiliar
     var auxSphere = BABYLON.MeshBuilder.CreateSphere("aux ", {diameter:handler_radius*0.5}, scene);
@@ -3332,7 +3412,7 @@ var createScene =  function () {
     //Línea orotodrímica proyectada sobre la tierra plana
     ortodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "ortodromic_line_fe", {points: line_data_fe},scene,true); 
     ortodromic_line_fe.material = ol_mat;
-    ortodromic_line_fe.isVisible=orto_es_visible;
+    ortodromic_line_fe.isVisible=orto_es_visible*fe_is_visible;
 
     //Material de la línea loxodromica
     ll_mat = new BABYLON.StandardMaterial("asph", scene);
@@ -3349,7 +3429,7 @@ var createScene =  function () {
     //Línea loxodrómica proyectada sobre la tierra plana
     loxodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "loxodromic_line", {points: line_data_lox_fe},scene,true); 
     loxodromic_line_fe.material = ll_mat;
-    loxodromic_line_fe.isVisible=loxo_es_visible;
+    loxodromic_line_fe.isVisible=loxo_es_visible*fe_line_size;
 
     //Material de la línea flatodrómica
     fl_mat = new BABYLON.StandardMaterial("asph", scene);
@@ -3361,7 +3441,7 @@ var createScene =  function () {
     //Línea flatodromica sobre la tierra plana
     flatodromic_line_fe =BABYLON.MeshBuilder.CreateLines ( "flatodromic_line", {points: line_data_flat_fe},scene,true); 
     flatodromic_line_fe.material=fl_mat;
-    flatodromic_line_fe.isVisible=flato_es_visible;
+    flatodromic_line_fe.isVisible=flato_es_visible*fe_is_visible;
 
     //Línea flatodromica sobre la esfera
     flatodromic_line_sp =BABYLON.MeshBuilder.CreateLines ( "flatodromic_line", {points: line_data_flat_sp},scene,true); 
@@ -3378,7 +3458,7 @@ var createScene =  function () {
     //Línea equiangular sobre la tierra plana
     equiangular_line_fe =BABYLON.MeshBuilder.CreateLines ( "equiangular_line", {points: line_data_eqac_fe},scene,true); 
     equiangular_line_fe.material=el_mat;
-    equiangular_line_fe.isVisible=eqac_es_visible;
+    equiangular_line_fe.isVisible=eqac_es_visible*fe_is_visible;
 
     //Línea equiangular sobre la esfera
     equiangular_line_sp =BABYLON.MeshBuilder.CreateLines ( "equiangular_line", {points: line_data_eqac_sp},scene,true); 
@@ -3426,18 +3506,18 @@ var createScene =  function () {
     //Líneas de dirección de la ubicaciones sobre la TP a La Luna
     fe_moon_line_1 =BABYLON.MeshBuilder.CreateLines ( "fe_moon_line_1", {points: fe_moon_line_data_1},scene,true); 
     fe_moon_line_1.material=sl_mat;
-    fe_moon_line_1.isVisible=moon_tp_visible;
+    fe_moon_line_1.isVisible=moon_tp_visible*fe_is_visible;
     fe_moon_line_2 =BABYLON.MeshBuilder.CreateLines ( "fe_moon_line_2", {points: fe_moon_line_data_2},scene,true); 
     fe_moon_line_2.material=sl_mat;
-    fe_moon_line_2.isVisible=moon_tp_visible;
+    fe_moon_line_2.isVisible=moon_tp_visible*fe_is_visible;
 
     //Líneas de dirección de la ubicaciones sobre la TP al Sol
     fe_sun_line_1 =BABYLON.MeshBuilder.CreateLines ( "fe_sun_line_1", {points: fe_sun_line_data_1},scene,true); 
     fe_sun_line_1.material=sl_mat;
-    fe_sun_line_1.isVisible=sun_tp_visible;
+    fe_sun_line_1.isVisible=sun_tp_visible*fe_is_visible;
     fe_sun_line_2 =BABYLON.MeshBuilder.CreateLines ( "fe_sun_line_2", {points: fe_sun_line_data_2},scene,true); 
     fe_sun_line_2.material=sl_mat;
-    fe_sun_line_2.isVisible=sun_tp_visible;
+    fe_sun_line_2.isVisible=sun_tp_visible*fe_is_visible;
 
     //Línea de iluminación
     ilu_line_sp =BABYLON.MeshBuilder.CreateLines ( "ilumination line", {points: ilu_data_sp},scene,true); 
@@ -3447,7 +3527,7 @@ var createScene =  function () {
     ilu_line_fe =BABYLON.MeshBuilder.CreateLines ( "ilumination line", {points: ilu_data_fe},scene,true); 
     ilu_line_fe.material=auxMat2;
     ilu_line_fe.alpha=ilu_alpha;
-    ilu_line_fe.isVisible=ilu_is_visible;
+    ilu_line_fe.isVisible=ilu_is_visible*fe_is_visible;
 
     //Flechas para las líneas de dirección-----------------
     var redArrowMat = new BABYLON.StandardMaterial("red arrow", scene);
@@ -3496,7 +3576,7 @@ var createScene =  function () {
         }, 
     scene);
     fe_sun_arrow_1.material=sunArrowMat;
-    fe_sun_arrow_1.isVisible=sun_tp_visible;
+    fe_sun_arrow_1.isVisible=sun_tp_visible*fe_is_visible;
     
     fe_sun_arrow_2 = BABYLON.MeshBuilder.CreateTube(
         "tube", {
@@ -3508,7 +3588,7 @@ var createScene =  function () {
         }, 
     scene);
     fe_sun_arrow_2.material=sunArrowMat;
-    fe_sun_arrow_2.isVisible=sun_tp_visible;
+    fe_sun_arrow_2.isVisible=sun_tp_visible*fe_is_visible;
     //
 
     //Flechas de dirección de La Luna en la TP
@@ -3522,7 +3602,7 @@ var createScene =  function () {
         }, 
     scene);
     fe_moon_arrow_1.material=moonArrowMat;
-    fe_moon_arrow_1.isVisible=moon_tp_visible;
+    fe_moon_arrow_1.isVisible=moon_tp_visible*fe_is_visible;
     
     fe_moon_arrow_2 = BABYLON.MeshBuilder.CreateTube(
         "tube", {
@@ -3534,7 +3614,7 @@ var createScene =  function () {
         }, 
     scene);
     fe_moon_arrow_2.material=moonArrowMat;
-    fe_moon_arrow_2.isVisible=moon_tp_visible;
+    fe_moon_arrow_2.isVisible=moon_tp_visible*fe_is_visible;
     //
 
     //
@@ -3543,6 +3623,8 @@ var createScene =  function () {
     rose_arrow_n=[];
     rose_arrow_s=[];
     for (var k=0;k<4;k++) {
+
+        if (fe_is_visible && k>1) continue;
 
         rose_arrow_sun[k] = BABYLON.MeshBuilder.CreateTube(
         "tube", {
@@ -3554,7 +3636,7 @@ var createScene =  function () {
         }, 
         scene);
         rose_arrow_sun[k].material=sunArrowMat;
-        rose_arrow_sun[k].isVisible=additional_model_info;
+        rose_arrow_sun[k].isVisible=additional_model_info*Math.abs(1-moon_cameras_point_moon);
 
         rose_arrow_moon[k] = BABYLON.MeshBuilder.CreateTube(
         "tube", {
@@ -3566,7 +3648,7 @@ var createScene =  function () {
         }, 
         scene);
         rose_arrow_moon[k].material=moonArrowMat;
-        rose_arrow_moon[k].isVisible=additional_model_info;
+        rose_arrow_moon[k].isVisible=additional_model_info*Math.abs(1-moon_cameras_point_moon);
 
         rose_arrow_n[k] = BABYLON.MeshBuilder.CreateTube(
         "tube", {
@@ -3578,7 +3660,7 @@ var createScene =  function () {
         }, 
         scene);
         rose_arrow_n[k].material=axisArrowMat;
-        rose_arrow_n[k].isVisible=additional_model_info;
+        rose_arrow_n[k].isVisible=additional_model_info*Math.abs(1-moon_cameras_point_moon);
 
         rose_arrow_s[k] = BABYLON.MeshBuilder.CreateTube(
         "tube", {
@@ -3590,7 +3672,7 @@ var createScene =  function () {
         }, 
         scene);
         rose_arrow_s[k].material=axisArrowMat;
-        rose_arrow_s[k].isVisible=additional_model_info;
+        rose_arrow_s[k].isVisible=additional_model_info*Math.abs(1-moon_cameras_point_moon);
 
     }
     //
@@ -3609,7 +3691,7 @@ var createScene =  function () {
         }, 
     scene);
     shadowEarth.material=shadowEarthMat;
-    shadowEarth.layerMask= 0x10000000;
+    shadowEarth.layerMask= 0x00000110;
     light.excludedMeshes.push(shadowEarth);
 
 
@@ -3627,28 +3709,28 @@ var createScene =  function () {
         }, 
     scene);
     shadowEarth2.material=shadowEarthMat2;
-    shadowEarth2.layerMask= 0x1000000;
+    shadowEarth2.layerMask= 0x00000110;
     light.excludedMeshes.push(shadowEarth2);
 
     //Esfera de corte y línea de corte para La Luna
     moon_cut_sphere = BABYLON.MeshBuilder.CreateSphere("aux ", {diameter:handler_radius*0.5}, scene);
     moon_cut_sphere.material=mooncutMat;
     moon_cut_sphere.position=moon_cut_p;
-    moon_cut_sphere.isVisible=moon_tp_visible*moon_tp_cut_visible;
+    moon_cut_sphere.isVisible=moon_tp_visible*moon_tp_cut_visible*fe_is_visible;
 
     moon_cut_line =BABYLON.MeshBuilder.CreateLines ( "moon_cut_line", {points: moon_cut_line_data},scene,true); 
     moon_cut_line.material=mooncutMat2;
-    moon_cut_line.isVisible=moon_tp_visible*moon_tp_cut_visible;
+    moon_cut_line.isVisible=moon_tp_visible*moon_tp_cut_visible*fe_is_visible;
 
     //Esfera de corte y línea de corte para El Sol
     sun_cut_sphere = BABYLON.MeshBuilder.CreateSphere("aux ", {diameter:handler_radius*0.5}, scene);
     sun_cut_sphere.material=suncutMat;
     sun_cut_sphere.position=sun_cut_p;
-    sun_cut_sphere.isVisible=sun_tp_visible*sun_tp_cut_visible;
+    sun_cut_sphere.isVisible=sun_tp_visible*sun_tp_cut_visible*fe_is_visible;
 
     sun_cut_line =BABYLON.MeshBuilder.CreateLines ( "sun_cut_line", {points: sun_cut_line_data},scene,true); 
     sun_cut_line.material=suncutMat2;
-    sun_cut_line.isVisible=sun_tp_visible*sun_tp_cut_visible;
+    sun_cut_line.isVisible=sun_tp_visible*sun_tp_cut_visible*fe_is_visible;
 
     //Líneas de observación de usuario sobre la TG
     user_line_1 =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: user_data_line_1},scene,true); 
@@ -3662,27 +3744,34 @@ var createScene =  function () {
     //Líneas de observación de usuario sobre la TP
     fe_user_line_1 =BABYLON.MeshBuilder.CreateLines ( "fe_user_line_1", {points: fe_user_data_line_1},scene,true); 
     fe_user_line_1.material=redMat2;
-    fe_user_line_1.isVisible=user_tp_lines_visible;
+    fe_user_line_1.isVisible=user_tp_lines_visible*fe_is_visible;
 
     fe_user_line_2 =BABYLON.MeshBuilder.CreateLines ( "fe_user_line_2", {points: fe_user_data_line_2},scene,true); 
     fe_user_line_2.material=blueMat2;
-    fe_user_line_2.isVisible=user_tp_lines_visible;
+    fe_user_line_2.isVisible=user_tp_lines_visible*fe_is_visible;
 
     //Trayectorias del Sol cenital
     sun_tr_line =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: sun_tr_line_data},scene,true); 
     sun_tr_line.material=suncutMat2;
     sun_tr_line_fe =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: sun_tr_line_data_fe},scene,true); 
     sun_tr_line_fe.material=suncutMat2;
+    sun_tr_line_fe.isVisible=fe_is_visible;
 
     //Trayectorias de la luna cenital
     moon_tr_line =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: moon_tr_line_data},scene,true); 
     moon_tr_line.material=mooncutMat2;
     moon_tr_line_fe =BABYLON.MeshBuilder.CreateLines ( "user_line_1", {points: moon_tr_line_data_fe},scene,true); 
     moon_tr_line_fe.material=mooncutMat2;
+    moon_tr_line_fe.isVisible=fe_is_visible;
         
     //Rose lines
     rose_line =BABYLON.MeshBuilder.CreateLines ( "rose_line", {points: rose_lines_data, colors: rose_lines_color_data},scene,true); 
     rose_line.material=auxMat2;
+
+    //Lineas del horizonte geométrico
+    hc_line =BABYLON.MeshBuilder.CreateLines ( "hc_line", {points: hc_lines_data, colors: hc_lines_color_data},scene,true); 
+    hc_line.material=auxMat2;
+    hc_line.renderingGroupId = 1;
 
     //Material de las lineas de umbra
     eclu_mat=new BABYLON.StandardMaterial("eclu_mat", scene);
@@ -3708,8 +3797,10 @@ var createScene =  function () {
 
     eclipse_line_umbra_fe =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_umbra_fe},scene,true); 
     eclipse_line_umbra_fe.material=eclp_mat;
+    eclipse_line_umbra_fe.isVisible=fe_is_visible;
     eclipse_line_penumbra_fe =BABYLON.MeshBuilder.CreateLines ( "eclipse_line", {points: eclipse_data_penumbra_fe},scene,true); 
     eclipse_line_penumbra_fe.material=eclp_mat;
+    eclipse_line_penumbra_fe.isVisible=fe_is_visible;
     
     sumo_line_sp =BABYLON.MeshBuilder.CreateLines ( "sun-moon line sp", {points: sumopos_sp},scene,true); 
     sumo_line_sp.material=auxMat2;
@@ -3718,8 +3809,8 @@ var createScene =  function () {
     sumopro_line_sp =BABYLON.MeshBuilder.CreateLines ( "sun-moon line fe", {points: sumopro_sp},scene,true); 
     sumopro_line_sp.material=auxMat2;
     sumopro_line_sp.alpha=0.125;
-    sumo_line_sp.isVisible=eclipse_test;
-    sumo_line_fe.isVisible=eclipse_test;
+    sumo_line_sp.isVisible=eclipse_test*fe_is_visible;
+    sumo_line_fe.isVisible=eclipse_test*fe_is_visible;
     sumopro_line_sp.isVisible=eclipse_test;
 
     //Material de las lineas de umbra
@@ -3734,47 +3825,48 @@ var createScene =  function () {
     stars_lines.material=stars_lines_mat;
     stars_lines.isVisible=stars_visible;
     
-
     //--Esfera celeste
-        sky_sphere = BABYLON.MeshBuilder.CreateSphere("sky_sphere", {segments:32, diameter:1000000}, scene);
+    sky_sphere = BABYLON.MeshBuilder.CreateSphere("sky_sphere", {segments:32, diameter:1000000}, scene);
 
-        sky_sphere.isPickable=false;
-        sky_sphere.isVisible=stars_visible;				
+    sky_sphere.isPickable=false;
+    sky_sphere.isVisible=stars_visible;				
 
-        var sky_material = new BABYLON.StandardMaterial("sky_sphere_material", scene);
-        sky_material.backFaceCulling = false;
-        sky_material.disableLighting = true;
-        sky_material.diffuseTexture = new BABYLON.Texture("images/sky_map_05_1.jpg", scene);
-        sky_material.emissiveColor = new BABYLON.Color3(1, 1, 1);
-        sky_material.diffuseTexture.uScale=1;
-        sky_material.diffuseTexture.vScale=-1;
-        //sky_material.useLogarithmicDepth = true;
-        sky_sphere.material = sky_material;
+    var sky_material = new BABYLON.StandardMaterial("sky_sphere_material", scene);
+    sky_material.backFaceCulling = false;
+    sky_material.disableLighting = true;
+    sky_material.diffuseTexture = new BABYLON.Texture("images/sky_map_05_1.jpg", scene);
+    sky_material.emissiveColor = new BABYLON.Color3(1, 1, 1);
+    sky_material.diffuseTexture.uScale=1;
+    sky_material.diffuseTexture.vScale=-1;
+    //sky_material.useLogarithmicDepth = true;
+    sky_sphere.material = sky_material;
 
-        tilt=23.4393*dtor;
-        sky_sphere.rotate(BABYLON.Axis.X, -tilt, BABYLON.Space.WORLD);
-        sky_sphere.rotate(BABYLON.Axis.Y, 0.0, BABYLON.Space.WORLD);
-        sky_sphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
+    tilt=23.4393*dtor;
+    sky_sphere.rotate(BABYLON.Axis.X, -tilt, BABYLON.Space.WORLD);
+    sky_sphere.rotate(BABYLON.Axis.Y, 0.0, BABYLON.Space.WORLD);
+    sky_sphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
 
-        //Corrección de precesión simple
-        var precesa=-3.82394E-5 *(JD-2451545.0)*dtor;
-        sky_sphere.rotate(BABYLON.Axis.X, 0.0, BABYLON.Space.WORLD);
-        sky_sphere.rotate(BABYLON.Axis.Y, precesa, BABYLON.Space.WORLD);
-        sky_sphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
+    //Corrección de precesión simple
+    var precesa=-3.82394E-5 *(JD-2451545.0)*dtor;
+    sky_sphere.rotate(BABYLON.Axis.X, 0.0, BABYLON.Space.WORLD);
+    sky_sphere.rotate(BABYLON.Axis.Y, precesa, BABYLON.Space.WORLD);
+    sky_sphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
 
-        sky_sphere.rotate(BABYLON.Axis.X, tilt, BABYLON.Space.WORLD);
-        sky_sphere.rotate(BABYLON.Axis.Y, 0.0, BABYLON.Space.WORLD);
-        sky_sphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
+    sky_sphere.rotate(BABYLON.Axis.X, tilt, BABYLON.Space.WORLD);
+    sky_sphere.rotate(BABYLON.Axis.Y, 0.0, BABYLON.Space.WORLD);
+    sky_sphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
 
-        sky_sphere.rotate(BABYLON.Axis.X, 0.0, BABYLON.Space.WORLD);
-        sky_sphere.rotate(BABYLON.Axis.Y, Math.PI+calc_gmst(), BABYLON.Space.WORLD);
-        sky_sphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
-        
-        //-------------------
+    sky_sphere.rotate(BABYLON.Axis.X, 0.0, BABYLON.Space.WORLD);
+    sky_sphere.rotate(BABYLON.Axis.Y, Math.PI+calc_gmst(), BABYLON.Space.WORLD);
+    sky_sphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
+    
+    //-------------------
     
 
     //--------------------------------------------------------
     
+    
+
     //Efecto neón para las líneas
     var glo = new BABYLON.GlowLayer("glow_effect", scene, {
         blurKernelSize: 30
@@ -3912,6 +4004,7 @@ var createScene =  function () {
         }
     }
     
+    
     //Punto de inicio y 
     //objeto seleccionado
     var startingPoint;
@@ -3961,54 +4054,36 @@ var createScene =  function () {
     pip_moon1_mat.emissiveTexture = rt_moon1;
     pip_moon1_mat.useLogarithmicDepth=true;
 
-    var pip_moon1 = BABYLON.Mesh.CreatePlane("plane", 1, scene);
-    pip_moon1.position = new BABYLON.Vector3(3.065, 1.165, 4);
+    var pip_moon1 = BABYLON.Mesh.CreatePlane("plane", 1.3, scene);
+    pip_moon1.position = new BABYLON.Vector3(3.065-0.15, 1.165-0.15, 4);
     pip_moon1.parent = camera;
     pip_moon1.material = pip_moon1_mat;
     pip_moon1.isVisible=0;
+    pip_moon1.renderingGroupId=2;
 
-    var pip_red_mat = new BABYLON.StandardMaterial("texturePlane", scene);
-    pip_red_mat.specularColor=new BABYLON.Color3(0,0,0);
-    pip_red_mat.diffuseColor=new BABYLON.Color3(0,0,0);
-    pip_red_mat.emissiveColor=new BABYLON.Color3(0.5,0.0,0.0);
-    pip_red_mat.useLogarithmicDepth=true;
-
-    var pip_red = BABYLON.Mesh.CreatePlane("plane", 1.1, scene);
-    pip_red.position = new BABYLON.Vector3(3.1, 1.2, 4.01);
-    pip_red.parent = camera;
-    pip_red.material = pip_red_mat;
-    pip_red.isVisible=0;
 
     var rt_moon2 = new BABYLON.RenderTargetTexture("render texture moon 2", 256, scene, false, false);
     scene.customRenderTargets.push(rt_moon2);
 	rt_moon2.activeCamera = camera_moon_2;
     rt_moon2.renderList = scene.meshes;
-        
+    
     var pip_moon2_mat = new BABYLON.StandardMaterial("texturePlane", scene);
     pip_moon2_mat.specularColor=new BABYLON.Color3(0,0,0);
     pip_moon2_mat.diffuseColor=new BABYLON.Color3(0,0,0);
     pip_moon2_mat.emissiveTexture = rt_moon2;
     pip_moon2_mat.useLogarithmicDepth=true;
 
-    var pip_moon2 = BABYLON.Mesh.CreatePlane("plane", 1, scene);
-    pip_moon2.position = new BABYLON.Vector3(3.065-0.055, 1.165-1.07, 3.925);
+    var pip_moon2 = BABYLON.Mesh.CreatePlane("plane", 1.3, scene);
+    pip_moon2.position = new BABYLON.Vector3(3.065-0.055-0.15, 1.165-1.07-0.45, 3.925);
     pip_moon2.parent = camera;
     pip_moon2.material = pip_moon2_mat;
     pip_moon2.isVisible=0;
-
-    var pip_blue_mat = new BABYLON.StandardMaterial("texturePlane", scene);
-    pip_blue_mat.specularColor=new BABYLON.Color3(0,0,0);
-    pip_blue_mat.diffuseColor=new BABYLON.Color3(0,0,0);
-    pip_blue_mat.emissiveColor=new BABYLON.Color3(0.0,0.0,0.5);
-    pip_blue_mat.useLogarithmicDepth=true;
-
-    var pip_blue = BABYLON.Mesh.CreatePlane("plane", 1.1, scene);
-    pip_blue.scaling.y=0.97;
-    pip_blue.position = new BABYLON.Vector3(3.1, 1.2-1.1, 4.01);
-    pip_blue.parent = camera;
-    pip_blue.material = pip_blue_mat;
-    pip_blue.isVisible=0;
-
+    pip_moon2.renderingGroupId=2;
+    
+    const hl = new BABYLON.HighlightLayer("hl1", scene);
+    //hl.outerGlow=false;
+    hl.addMesh(pip_moon2, BABYLON.Color3.Blue());
+    hl.addMesh(pip_moon1, BABYLON.Color3.Red());
 
     //GUI--------------------------------------------------------
 
@@ -4016,7 +4091,7 @@ var createScene =  function () {
 	//var advancedTexture1 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 	//var advancedTexture2 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 	
-    advancedTexture.layer.layerMask=camera.layerMask;
+    //advancedTexture.layer.layerMask=camera.layerMask;
     //advancedTexture1.layer.layerMask=camera_moon_1.layerMask;
     //advancedTexture2.layer.layerMask=camera_moon_2.layerMask;
     
@@ -5143,8 +5218,8 @@ var createScene =  function () {
 
             pip_moon1.isVisible=0;
             pip_moon2.isVisible=0;
-            pip_red.isVisible=0;
-            pip_blue.isVisible=0;
+            //pip_red.isVisible=0;
+            //pip_blue.isVisible=0;
 
             moon_cameras_option=0;
             vpt_btn.background="red";
@@ -5153,8 +5228,8 @@ var createScene =  function () {
 
             pip_moon1.isVisible=1;
             pip_moon2.isVisible=1;
-            pip_red.isVisible=1;
-            pip_blue.isVisible=1;
+            //pip_red.isVisible=1;
+            //pip_blue.isVisible=1;
 
             moon_cameras_option=1;
             vpt_btn.background="green";
@@ -5166,8 +5241,8 @@ var createScene =  function () {
 
     //Camaras apuntan a la luna
     var cptm_btn=BABYLON.GUI.Button.CreateSimpleButton("Cam to Moon","");
-    cptm_btn.textBlock.text="View Moon";
-    cptm_btn.width="70px";
+    cptm_btn.textBlock.text="Cam to Moon";
+    cptm_btn.width="90px";
     cptm_btn.height="16px";
     cptm_btn.fontSize = 12;
     cptm_btn.thickness=1;
@@ -5243,8 +5318,8 @@ var createScene =  function () {
 
 
     //Activa y desactiva las cámaras secundarias
-    var showsky_btn=BABYLON.GUI.Button.CreateSimpleButton("sky visible","");
-    showsky_btn.textBlock.text="Sky visible";
+    var showsky_btn=BABYLON.GUI.Button.CreateSimpleButton(" Show Sky","");
+    showsky_btn.textBlock.text="Show Sky";
     showsky_btn.width="90px";
     showsky_btn.height="16px";
     showsky_btn.fontSize = 12;
@@ -5276,6 +5351,46 @@ var createScene =  function () {
 
 	});	
     opts_rect.addControl(showsky_btn);
+
+
+    //Activa y desactiva las cámaras secundarias
+    var fe_is_visible_btn=BABYLON.GUI.Button.CreateSimpleButton("Show FE","");
+    fe_is_visible_btn.textBlock.text="Show FE";
+    fe_is_visible_btn.width="60px";
+    fe_is_visible_btn.height="16px";
+    fe_is_visible_btn.fontSize = 12;
+    fe_is_visible_btn.thickness=1;
+    fe_is_visible_btn.color="white";
+    fe_is_visible_btn.background="green";
+    fe_is_visible_btn.top=sl_top_pos+63+20;
+    fe_is_visible_btn.left=102;
+    fe_is_visible_btn.horizontalAlignment = al_left;
+    fe_is_visible_btn.verticalAlignment  = al_top;
+    fe_is_visible_btn.textHorizontalAlignment = al_left;		
+    fe_is_visible_btn.fontFamily = 'monospace';
+    if (fe_is_visible==1) {
+        fe_is_visible_btn.background="green";
+        } else {
+        fe_is_visible_btn.background="red";
+    }
+    fe_is_visible_btn.onPointerClickObservable.add(function() {
+
+        if (fe_is_visible==1) {
+
+            fe_is_visible=0;
+            fe_is_visible_btn.background="red";
+
+        } else {
+
+            fe_is_visible=1;
+            fe_is_visible_btn.background="green";
+            
+        }
+
+        update_all();
+
+	});	
+    opts_rect.addControl(fe_is_visible_btn);
 
 
 	 //Activa y desactiva la conrrección de horizonte con la altura
@@ -6356,7 +6471,7 @@ var createScene =  function () {
         if (h1<0) h1=0;
         if (h1>999999) h1=999999;
 
-        h1_alt_co=Math.PI/2.0-Math.asin(6371/(6371+h1/1000));
+        h1_alt_co=Math.PI/2.0-Math.asin(earth_radius/(earth_radius+h1/1000));
         
         if (horizon_correction==0) h1_alt_co=0;
 
@@ -6400,7 +6515,7 @@ var createScene =  function () {
         if (h1<0) h1=0;
         if (h1>999999) h1=999999;
 
-        h1_alt_co=Math.PI/2.0-Math.asin(6371/(6371+h1/1000));
+        h1_alt_co=Math.PI/2.0-Math.asin(earth_radius/(earth_radius+h1/1000));
 
         if (horizon_correction==0) h1_alt_co=0;
 
@@ -6689,7 +6804,7 @@ var createScene =  function () {
         if (h2<0) h2=0;
         if (h2>999999) h2=999999;
 
-        h2_alt_co=Math.PI/2.0-Math.asin(6371/(6371+h2/1000));
+        h2_alt_co=Math.PI/2.0-Math.asin(earth_radius/(earth_radius+h2/1000));
 
         if (horizon_correction==0) h2_alt_co=0;
 
@@ -6733,7 +6848,7 @@ var createScene =  function () {
         if (h2<0) h1=0;
         if (h2>999999) h2=999999;
 
-        h2_alt_co=Math.PI/2.0-Math.asin(6371/(6371+h2/1000));
+        h2_alt_co=Math.PI/2.0-Math.asin(earth_radius/(earth_radius+h2/1000));
 
         if (horizon_correction==0) h2_alt_co=0;
 
@@ -8251,11 +8366,11 @@ var createScene =  function () {
     closed_data_rect.addControl(data_text_o);
     //END GUI----------------------------------------------------
 
-    
+    /*
     scene.onBeforeRenderObservable.add(() => {
         //engine.disableScissor();
     });
-    
+    */
 
     /*
     scene.onBeforeCameraRenderObservable.add(camera => {
@@ -8291,8 +8406,10 @@ var createScene =  function () {
     //Animación
     scene.registerBeforeRender(function () {
 
-        rt_moon1.render();
-        rt_moon2.render();
+        if (moon_cameras_option==1) {
+            rt_moon1.render();
+            rt_moon2.render();
+        }
 
         if (animation_control==0) return;
 
@@ -8971,7 +9088,7 @@ var createScene =  function () {
 
     //Comportamiento general al pulsar botones
     //o mover el ratón
-    scene.onPointerObservable.add((pointerInfo) => {   
+    scene.onPointerObservable.add((pointerInfo) => {
 
         switch (pointerInfo.type) {
 
@@ -9329,6 +9446,12 @@ var createScene =  function () {
         for (var k=0;k<4;k++) {
 
             rose_arrow_sun[k].dispose();
+            rose_arrow_moon[k].dispose();
+            rose_arrow_n[k].dispose();
+            rose_arrow_s[k].dispose();
+
+            if (fe_is_visible==0 && k>1) continue;
+            
             rose_arrow_sun[k] = BABYLON.MeshBuilder.CreateTube(
             "tube", {
                 path: [rose_arrow_sun_b[k],rose_arrow_sun_e[k]], 
@@ -9339,9 +9462,9 @@ var createScene =  function () {
             }, 
             scene);
             rose_arrow_sun[k].material=sunArrowMat;
-            rose_arrow_sun[k].isVisible=additional_model_info;
+            rose_arrow_sun[k].isVisible=additional_model_info*Math.abs(1-moon_cameras_point_moon);
 
-            rose_arrow_moon[k].dispose();
+            
             rose_arrow_moon[k] = BABYLON.MeshBuilder.CreateTube(
             "tube", {
                 path: [rose_arrow_moon_b[k],rose_arrow_moon_e[k]], 
@@ -9352,9 +9475,9 @@ var createScene =  function () {
             }, 
             scene);
             rose_arrow_moon[k].material=moonArrowMat;
-            rose_arrow_moon[k].isVisible=additional_model_info;
+            rose_arrow_moon[k].isVisible=additional_model_info*Math.abs(1-moon_cameras_point_moon);
 
-            rose_arrow_n[k].dispose();
+            
             rose_arrow_n[k] = BABYLON.MeshBuilder.CreateTube(
             "tube", {
                 path: [rose_arrow_n_b[k],rose_arrow_n_e[k]], 
@@ -9365,9 +9488,9 @@ var createScene =  function () {
             }, 
             scene);
             rose_arrow_n[k].material=axisArrowMat;
-            rose_arrow_n[k].isVisible=additional_model_info;
+            rose_arrow_n[k].isVisible=additional_model_info*Math.abs(1-moon_cameras_point_moon);
 
-            rose_arrow_s[k].dispose();
+            
             rose_arrow_s[k] = BABYLON.MeshBuilder.CreateTube(
             "tube", {
                 path: [rose_arrow_s_b[k],rose_arrow_s_e[k]], 
@@ -9378,7 +9501,7 @@ var createScene =  function () {
             }, 
             scene);
             rose_arrow_s[k].material=axisArrowMat;
-            rose_arrow_s[k].isVisible=additional_model_info;
+            rose_arrow_s[k].isVisible=additional_model_info*Math.abs(1-moon_cameras_point_moon);
 
         }
 
@@ -9572,22 +9695,22 @@ var createScene =  function () {
         moon_cut_line.dispose();
         moon_cut_line =BABYLON.MeshBuilder.CreateLines ( "moon_cut_line", {points: moon_cut_line_data},scene,true); 
         moon_cut_line.material=mooncutMat2;
-        moon_cut_line.isVisible=moon_tp_visible*moon_tp_cut_visible;
+        moon_cut_line.isVisible=moon_tp_visible*moon_tp_cut_visible*fe_is_visible;
 
         moon_cut_sphere.position=moon_cut_p.subtract(zero);
         moon_cut_sphere.material=mooncutMat;
-        moon_cut_sphere.isVisible=moon_tp_visible*moon_tp_cut_visible;
+        moon_cut_sphere.isVisible=moon_tp_visible*moon_tp_cut_visible*fe_is_visible;
     
         //Actualización de la línea y punto de corte
         //de las direcciones hacia el Sol en la TP
         sun_cut_line.dispose();
         sun_cut_line =BABYLON.MeshBuilder.CreateLines ( "sun_cut_line", {points: sun_cut_line_data},scene,true); 
         sun_cut_line.material=suncutMat2;
-        sun_cut_line.isVisible=sun_tp_visible*sun_tp_cut_visible;
+        sun_cut_line.isVisible=sun_tp_visible*sun_tp_cut_visible*fe_is_visible;
 
         sun_cut_sphere.position=sun_cut_p.subtract(zero);
         sun_cut_sphere.material=suncutMat;
-        sun_cut_sphere.isVisible=sun_tp_visible*sun_tp_cut_visible;
+        sun_cut_sphere.isVisible=sun_tp_visible*sun_tp_cut_visible*fe_is_visible;
 
         //Actualización de las líneas de observación de usuario
         user_line_1.dispose();
@@ -9615,6 +9738,12 @@ var createScene =  function () {
         rose_line.dispose();
         rose_line =BABYLON.MeshBuilder.CreateLines ( "rose_line", {points: rose_lines_data, colors: rose_lines_color_data},scene,true); 
         rose_line.material=auxMat2;
+        
+        //Líneas del horizonte geometrico
+        hc_line.dispose();
+        hc_line =BABYLON.MeshBuilder.CreateLines ( "hc_line", {points: hc_lines_data, colors: hc_lines_color_data},scene,true); 
+        hc_line.material=auxMat2;
+        hc_line.renderingGroupId = 1;
 
         //Líneas de eclipse
         eclipse_line_umbra.dispose();
@@ -9756,7 +9885,6 @@ var createScene =  function () {
         MoonSphere.rotate(BABYLON.Axis.Y, moon_ori2, BABYLON.Space.WORLD);
         MoonSphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
 
-
         ilu_text=new BABYLON.RawTexture.CreateRGBTexture(ilu_texture_data, ilu_ts, ilu_ts, scene);
         FlatEarthMat.ambientTexture=ilu_text;
 
@@ -9781,6 +9909,49 @@ var createScene =  function () {
         sky_sphere.rotate(BABYLON.Axis.X, 0.0, BABYLON.Space.WORLD);
         sky_sphere.rotate(BABYLON.Axis.Y, Math.PI+calc_gmst(), BABYLON.Space.WORLD);
         sky_sphere.rotate(BABYLON.Axis.Z, 0.0, BABYLON.Space.WORLD);
+
+
+        //--Muestra o esconde la tierra plana y sus elementos
+        EarthDisk.isVisible=fe_is_visible;
+
+        moonFe.isVisible=fe_is_visible;
+        sunFe.isVisible=fe_is_visible;
+
+        redSphere_fe.isVisible=fe_is_visible;
+        blueSphere_fe.isVisible=fe_is_visible;
+
+        ortodromic_line_fe.isVisible=orto_es_visible*fe_is_visible;
+        loxodromic_line_fe.isVisible=loxo_es_visible*fe_is_visible;
+        flatodromic_line_fe.isVisible=flato_es_visible*fe_is_visible;
+        equiangular_line_fe.isVisible=eqac_es_visible*fe_is_visible;
+
+        fe_moon_line_1.isVisible=moon_tp_visible*fe_is_visible;
+        fe_moon_line_2.isVisible=moon_tp_visible*fe_is_visible;
+        fe_sun_line_1.isVisible=sun_tp_visible*fe_is_visible;
+        fe_sun_line_2.isVisible=sun_tp_visible*fe_is_visible;
+
+        ilu_line_fe.isVisible=ilu_is_visible*fe_is_visible;
+
+        fe_sun_arrow_1.isVisible=sun_tp_visible*fe_is_visible;
+        fe_sun_arrow_2.isVisible=sun_tp_visible*fe_is_visible;
+        fe_moon_arrow_1.isVisible=moon_tp_visible*fe_is_visible;
+        fe_moon_arrow_2.isVisible=moon_tp_visible*fe_is_visible;
+
+        fe_user_line_1.isVisible=user_tp_lines_visible*fe_is_visible;
+        fe_user_line_2.isVisible=user_tp_lines_visible*fe_is_visible;
+
+        sun_tr_line_fe.isVisible=fe_is_visible;
+        moon_tr_line_fe.isVisible=fe_is_visible;
+
+        eclipse_line_umbra_fe.isVisible=fe_is_visible;
+        eclipse_line_penumbra_fe.isVisible=fe_is_visible;
+
+        moon_cut_sphere.isVisible=moon_tp_visible*moon_tp_cut_visible*fe_is_visible;
+        moon_cut_line.isVisible=moon_tp_visible*moon_tp_cut_visible*fe_is_visible;
+        sun_cut_sphere.isVisible=sun_tp_visible*sun_tp_cut_visible*fe_is_visible;
+        sun_cut_line.isVisible=sun_tp_visible*sun_tp_cut_visible*fe_is_visible;
+
+        //--
 
     }
    
