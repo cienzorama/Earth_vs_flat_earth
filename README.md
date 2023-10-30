@@ -5,13 +5,15 @@ Interactive Earth vs. flat earth comparision using babylon.js
 
 https://cienzorama.github.io/Earth_vs_flat_earth/
 
-## Last update [2023 10 20]
+## Last update [2023 10 30]
 
-- Added markers to to save and load observers locations
-- Added option to show locations where observers see Sun and Moon at same altitude
+- Hide some lines and clean the view when activate secondary cameras
+- Corrected errors on markers to save and load observers locations
+- Fix bugs in precession correction
 - Multiple corrections and optimizations
 
 ## Other recent updates
+- Added option to show locations where observers see Sun and Moon at same altitude
 - Added option to show or hide flat earth and related elements
 - Added geometric and astronomical horizon visualization
 - Added geometric and astronomical horizon visualization
