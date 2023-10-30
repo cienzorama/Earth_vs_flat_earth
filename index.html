@@ -29,7 +29,7 @@
         <!--<script src="https://openlayers.org/en/v4.6.5/css/ol.css"></script> -->
 
         <!--- Base de datos de figura de las constelaciones --->
-		<script src="js/stars_db.js"></script>
+		<script src="/js/stars_db.js"></script>
 
 
         <style>
@@ -2367,6 +2367,9 @@ var calculate_lines=function() {
             }
 
             for (var j=0;j<11;j++) {
+
+                if (j>=9 && moon_cameras_option==1) continue;
+
                 for (var i=0;i<4;i++) {
 
                     var rose_ang=i*2*Math.PI/4+j/9.0*Math.PI/2.0;
@@ -2540,12 +2543,17 @@ var calculate_lines=function() {
             rose_arrow_sun_e[k]=((rose_p2.subtract(rpos)).scale(0.85)).add(rpos);
             rose_arrow_sun_b[k]=rose_p2.subtract(zero);
 
-            rose_lines_data[n_rose_lines_data]=rose_p1.subtract(zero);
-            rose_lines_color_data[n_rose_lines_data]=rcolor;
-            n_rose_lines_data++;
-            rose_lines_data[n_rose_lines_data]=rose_p2.subtract(zero);
-            rose_lines_color_data[n_rose_lines_data]=rcolor;
-            n_rose_lines_data++;
+            if (moon_cameras_option==0) {
+                rose_lines_data[n_rose_lines_data]=rose_p1.subtract(zero);
+                rose_lines_color_data[n_rose_lines_data]=rcolor;
+                n_rose_lines_data++;
+                rose_lines_data[n_rose_lines_data]=rose_p2.subtract(zero);
+                rose_lines_color_data[n_rose_lines_data]=rcolor;
+                n_rose_lines_data++;
+            } else {
+                rose_arrow_sun_e[k]=nan.subtract(zero);
+                rose_arrow_sun_b[k]=nan.subtract(zero);
+            }
 
             var rcolor=new BABYLON.Color4(0.5,0.5,0.5,1);
             rose_p1=rpos.subtract(zero);
@@ -2570,12 +2578,17 @@ var calculate_lines=function() {
             rose_arrow_moon_e[k]=((rose_p2.subtract(rpos)).scale(0.85)).add(rpos);
             rose_arrow_moon_b[k]=rose_p2.subtract(zero);
 
-            rose_lines_data[n_rose_lines_data]=rose_p1.subtract(zero);
-            rose_lines_color_data[n_rose_lines_data]=rcolor;
-            n_rose_lines_data++;
-            rose_lines_data[n_rose_lines_data]=rose_p2.subtract(zero);
-            rose_lines_color_data[n_rose_lines_data]=rcolor;
-            n_rose_lines_data++;
+            if (moon_cameras_option==0) {
+                rose_lines_data[n_rose_lines_data]=rose_p1.subtract(zero);
+                rose_lines_color_data[n_rose_lines_data]=rcolor;
+                n_rose_lines_data++;
+                rose_lines_data[n_rose_lines_data]=rose_p2.subtract(zero);
+                rose_lines_color_data[n_rose_lines_data]=rcolor;
+                n_rose_lines_data++;
+            } else {
+                rose_arrow_moon_e[k]=nan.subtract(zero);
+                rose_arrow_moon_b[k]=nan.subtract(zero);
+            }
 
             //Añade un punto nulo a la lista
             //Fin de la cadena de líneas
@@ -5356,6 +5369,8 @@ var createScene =  function () {
             moon_cameras_option=1;
             vpt_btn.background="green";
         }
+
+        update_all();
 
 	});	
     opts_rect.addControl(vpt_btn);
