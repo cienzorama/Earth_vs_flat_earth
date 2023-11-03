@@ -29,7 +29,7 @@
         <!--<script src="https://openlayers.org/en/v4.6.5/css/ol.css"></script> -->
 
         <!--- Base de datos de figura de las constelaciones --->
-		<script src="js/stars_db.js"></script>
+		<script src="/js/stars_db.js"></script>
 
 
         <style>
@@ -2551,8 +2551,10 @@ var calculate_lines=function() {
                 rose_lines_color_data[n_rose_lines_data]=rcolor;
                 n_rose_lines_data++;
             } else {
-                rose_arrow_sun_e[k]=nan.subtract(zero);
-                rose_arrow_sun_b[k]=nan.subtract(zero);
+                //rose_arrow_sun_e[k]=nan.subtract(zero);
+                //rose_arrow_sun_b[k]=nan.subtract(zero);
+                rose_arrow_sun_e[k]=zero;
+                rose_arrow_sun_b[k]=zero;
             }
 
             var rcolor=new BABYLON.Color4(0.5,0.5,0.5,1);
@@ -2586,8 +2588,10 @@ var calculate_lines=function() {
                 rose_lines_color_data[n_rose_lines_data]=rcolor;
                 n_rose_lines_data++;
             } else {
-                rose_arrow_moon_e[k]=nan.subtract(zero);
-                rose_arrow_moon_b[k]=nan.subtract(zero);
+                //rose_arrow_moon_e[k]=nan.subtract(zero);
+                //rose_arrow_moon_b[k]=nan.subtract(zero);
+                rose_arrow_moon_e[k]=zero;
+                rose_arrow_moon_b[k]=zero;
             }
 
             //Añade un punto nulo a la lista
@@ -5452,6 +5456,29 @@ var createScene =  function () {
         stars_lines.material=stars_lines_mat;
     });
     opts_rect.addControl(starfig_slider);
+
+
+    //Control del FOV de las cámaras secundarias
+    campos_slider = new BABYLON.GUI.Slider();
+    campos_slider.minimum = -1.0;
+    campos_slider.maximum = 1.0;
+    campos_slider.value = 0
+    campos_slider.step=0.01;
+    campos_slider.height = "11px";
+    campos_slider.width = "90px";
+    campos_slider.top=sl_top_pos+45+20+20;
+    campos_slider.left="175px";
+    campos_slider.background = "gray";
+    campos_slider.color="gray";
+    campos_slider.horizontalAlignment = al_left;
+    campos_slider.verticalAlignment = al_top;			
+    campos_slider.onValueChangedObservable.add(function(value) {
+       
+        pip_moon1.position = new BABYLON.Vector3(3.065-0.15+value, 1.165-0.15, 4);
+        pip_moon2.position = new BABYLON.Vector3(3.065-0.055-0.15+value*0.98, 1.165-1.07-0.45, 3.925);
+
+    });
+    opts_rect.addControl(campos_slider);
 
 
     //Activa y desactiva las cámaras secundarias
